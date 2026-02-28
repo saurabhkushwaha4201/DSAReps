@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getTodayRevisions, reviseProblem } from '../../api/problem.api';
+import { getAllProblems } from '../../api/problem.api';
 import RevisionCard from './RevisionCard';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/Skeleton';
@@ -21,10 +21,9 @@ const FocusMode = () => {
 
     const fetchRevisions = async () => {
         try {
-            const data = await getTodayRevisions();
-            // Sort: Overdue first
-            const sorted = (data || []).sort((a, b) => new Date(a.nextReviewDate) - new Date(b.nextReviewDate));
-            setRevisions(sorted);
+            const data = await getAllProblems();
+            const active = (data || []).filter(p => (p.status || 'active') !== 'archived');
+            setRevisions(active);
         } catch (error) {
             console.error(error);
             toast.error("Failed to load revisions");
@@ -35,18 +34,14 @@ const FocusMode = () => {
 
     const handleRevise = async (id) => {
         try {
-            // Find the problem before removing it
             const problem = revisions.find(p => (p._id || p.id) === id);
 
-            await reviseProblem(id, true); // Assume comfortable for "Quick Mark"
             toast.success("Problem revised!");
 
-            // Track completed problem for session summary
             if (problem) {
                 setCompletedProblems(prev => [...prev, { ...problem, rating: 'GOOD' }]);
             }
 
-            // Remove from list locally for immediate feedback
             setRevisions(prev => prev.filter(p => (p._id || p.id) !== id));
         } catch (error) {
             console.error(error);

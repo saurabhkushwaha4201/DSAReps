@@ -1,17 +1,11 @@
-import React, { useState, useRef } from 'react';
-import { Archive, RotateCcw, Calendar, ExternalLink, CheckCircle, Zap, StickyNote, Clock } from 'lucide-react';
-import { format } from 'date-fns';
+import React from 'react';
+import { Archive, RotateCcw, ExternalLink, CheckCircle, StickyNote } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { ReschedulePopover } from './ReschedulePopover';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { useLocalData } from '../../hooks/useLocalData';
-import { calculateMasteryLevel, getUrgencyScore } from '../../lib/intelligence';
-import toast from 'react-hot-toast';
 
-export default function ProblemCard({ problem, onMarkRevised, onArchive, onRestore, onReschedule, onOpenNotes }) {
-    const [showSchedule, setShowSchedule] = useState(false);
-    const scheduleRef = useRef(null);
+export default function ProblemCard({ problem, onMarkRevised, onArchive, onRestore, onOpenNotes }) {
     const isOnline = useOnlineStatus();
     const { getProblemNote } = useLocalData();
 
@@ -19,33 +13,9 @@ export default function ProblemCard({ problem, onMarkRevised, onArchive, onResto
     const id = problem._id || problem.id;
     const isArchived = problem.status === 'archived';
     const hasNotes = !!getProblemNote(id);
-    const masteryLevel = calculateMasteryLevel(problem);
-    const urgency = getUrgencyScore(problem);
-
-    const handleDateSelect = (newDate) => {
-        onReschedule(id, newDate);
-        toast.success(`Rescheduled to ${format(newDate, 'MMM d')}`);
-    };
-
-    const getMasteryColor = (level) => {
-        if (level === 0) return 'bg-slate-100';
-        if (level < 3) return 'bg-emerald-200'; // Familiar
-        return 'bg-emerald-500'; // Mastered
-    };
 
     return (
-        <Card className={`group relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between p-4 hover:border-indigo-200 transition-colors border-l-4 ${urgency.color} ${isArchived ? 'opacity-60 bg-slate-50 dark:bg-slate-900/50' : ''}`}>
-
-            {/* Visual: Mastery Progress Bar (Segmented) */}
-            <div className="absolute bottom-0 left-0 w-full flex gap-0.5 h-1.5 opacity-80 pointer-events-none">
-                {[1, 2, 3, 4, 5].map((step) => (
-                    <div
-                        key={step}
-                        className={`flex-1 ${step <= masteryLevel ? getMasteryColor(masteryLevel) : 'bg-slate-100 dark:bg-slate-800'}`}
-                        title={`Mastery Level: ${masteryLevel}/5`}
-                    />
-                ))}
-            </div>
+        <Card className={`group relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between p-4 hover:border-indigo-200 transition-colors border-l-4 border-l-slate-200 ${isArchived ? 'opacity-60 bg-slate-50 dark:bg-slate-900/50' : ''}`}>
 
             {/* LEFT: Info */}
             <div className="flex items-center gap-4 min-w-0 flex-1 mb-2 md:mb-0">
@@ -70,38 +40,13 @@ export default function ProblemCard({ problem, onMarkRevised, onArchive, onResto
                                 {problem.title}
                             </h3>
                         )}
-                        {masteryLevel >= 5 && <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />}
                         {hasNotes && <StickyNote className="w-3 h-3 text-slate-400" />}
                     </div>
 
                     <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
                         <span className="capitalize">{problem.platform}</span>
                         <span>•</span>
-
-                        {/* Editable Schedule Trigger */}
-                        <div className="relative">
-                            <button
-                                ref={scheduleRef}
-                                onClick={() => !isArchived && setShowSchedule(!showSchedule)}
-                                className={`flex items-center gap-1 hover:text-indigo-500 transition-colors ${isArchived ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                                disabled={isArchived}
-                            >
-                                <Calendar size={12} />
-                                {isArchived ? 'Archived' : `Next: ${problem.nextRevisionAt || problem.nextReviewDate ? format(new Date(problem.nextRevisionAt || problem.nextReviewDate), 'MMM d') : 'None'}`}
-                            </button>
-                            <ReschedulePopover
-                                isOpen={showSchedule}
-                                onClose={() => setShowSchedule(false)}
-                                onSelect={handleDateSelect}
-                                triggerRef={scheduleRef}
-                            />
-                        </div>
-
-                        {!isArchived && urgency.score >= 5 && (
-                            <span className={`${urgency.score >= 8 ? "text-red-600 bg-red-50 dark:bg-red-900/20 px-1.5 rounded" : "text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-1.5 rounded"}`}>
-                                {urgency.label}
-                            </span>
-                        )}
+                        <span>{problem.difficulty}</span>
                     </div>
                 </div>
             </div>
