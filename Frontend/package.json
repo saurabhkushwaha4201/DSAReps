@@ -1,0 +1,11 @@
+{
+  "name": "dsa-revision-tracker",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Track your DSA revisions from LeetCode and Codeforces.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

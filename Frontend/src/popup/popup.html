@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSA Tracker Extension</title>
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --primary: #4f46e5; /* Indigo-600 */
+            --primary-hover: #4338ca; /* Indigo-700 */
+            --surface-border: #e2e8f0;
+            --input-bg: #f8fafc;
+            --success: #10b981;
+            --error: #ef4444;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        /* Dark Mode Support (Optional - matches system preference) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-body: #0f172a;
+                --bg-card: #1e293b;
+                --text-primary: #f8fafc;
+                --text-secondary: #94a3b8;
+                --primary: #6366f1; /* Indigo-500 */
+                --primary-hover: #818cf8;
+                --surface-border: #334155;
+                --input-bg: #0f172a;
+            }
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            margin: 0;
+            width: 350px; /* Slightly wider for better layout */
+            min-height: 450px;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .container {
+            padding: 1.25rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header --- */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--surface-border);
+            margin-bottom: 1rem;
+        }
+
+        .brand {
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+        }
+
+        .link-icon {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+            cursor: pointer;
+        }
+
+        .link-icon:hover {
+            color: var(--primary);
+        }
+
+        /* --- Typography --- */
+        h2 { font-size: 1.25rem; margin: 0 0 0.5rem 0; font-weight: 600; }
+        h3 { font-size: 1rem; margin: 0; font-weight: 600; }
+        p { margin: 0 0 1rem 0; color: var(--text-secondary); font-size: 0.875rem; line-height: 1.5; }
+
+        /* --- Utilities --- */
+        .hidden { display: none !important; }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+        .flex-between { display: flex; align-items: center; justify-content: space-between; }
+        .mt-4 { margin-top: 1rem; }
+        .w-full { width: 100%; }
+
+        /* --- Forms & Inputs --- */
+        .input-group { margin-bottom: 1rem; }
+        
+        label {
+            display: block;
+            margin-bottom: 0.35rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            background-color: var(--input-bg);
+            border: 1px solid var(--surface-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); /* Subtle Indigo Ring */
+        }
+
+        textarea { resize: vertical; min-height: 80px; }
+
+        /* --- Buttons --- */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            width: 100%;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--surface-border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--text-primary);
+            color: var(--text-primary);
+            background-color: var(--bg-card);
+        }
+
+        /* --- Problem Header --- */
+        .problem-card-header {
+            background-color: var(--bg-card);
+            border: 1px solid var(--surface-border);
+            padding: 0.75rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.25rem;
+        }
+
+        .platform-badge {
+            font-size: 0.7rem;
+            background-color: var(--surface-border);
+            padding: 2px 8px;
+            border-radius: 99px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* --- States --- */
+        .state-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Spinner --- */
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--surface-border);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem auto;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Icon Helper (Mocking SVG via text or simple shape) */
+        .icon-mock {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            background: currentColor;
+            mask-size: contain;
+            -webkit-mask-size: contain;
+            mask-repeat: no-repeat;
+            -webkit-mask-repeat: no-repeat;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header id="app-header" class="app-header hidden">
+            <div class="brand">
+                <div style="width: 18px; height: 18px; background: var(--primary); border-radius: 4px;"></div>
+                DSA Tracker
+            </div>
+            <a id="link-dashboard" class="link-icon" href="#" title="Open Full Dashboard">
+                Dashboard &nearr;
+            </a>
+        </header>
+
+        <div id="state-loading" class="state-container">
+            <div class="spinner"></div>
+            <h3>Detecting Context...</h3>
+            <p id="loading-text">Analyzing current page</p>
+        </div>
+
+        <div id="state-auth" class="state-container hidden">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔐</div>
+            <h2>Login Required</h2>
+            <p>Connect your account to start saving problems and tracking your progress.</p>
+            <button id="btn-login" class="btn btn-primary">Sign In with Google</button>
+        </div>
+
+        <div id="state-unsupported" class="state-container hidden">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🧩</div>
+            <h2>No Problem Found</h2>
+            <p>Navigate to a <b>LeetCode</b> or <b>Codeforces</b> problem page to activate the tracker.</p>
+            <button id="btn-open-lc" class="btn btn-outline">Go to LeetCode</button>
+        </div>
+
+        <div id="state-form" class="hidden">
+            <div class="problem-card-header">
+                <div class="flex-between">
+                    <span id="platform-badge" class="platform-badge">LeetCode</span>
+                    <button id="btn-logout-small" class="link-icon" style="background:none; border:none; padding:0;">
+                        Logout
+                    </button>
+                </div>
+                <h3 id="problem-title" class="mt-2" style="color: var(--primary);">Two Sum</h3>
+            </div>
+
+            <form id="save-form">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-group">
+                        <label>Difficulty</label>
+                        <select id="difficulty">
+                            <option value="Easy">🟢 Easy</option>
+                            <option value="Medium" selected>🟡 Medium</option>
+                            <option value="Hard">🔴 Hard</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Status</label>
+                        <select id="attempt-type">
+                            <option value="solved">✅ Solved</option>
+                            <option value="partial">🚧 Partial</option>
+                            <option value="watched">👀 Watched</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Time Spent (Minutes)</label>
+                    <input type="number" id="time-spent" placeholder="e.g. 25" min="0">
+                </div>
+
+                <div class="input-group">
+                    <label>Quick Notes / Tags</label>
+                    <textarea id="notes" placeholder="e.g. Used HashMap, O(n) time..."></textarea>
+                </div>
+
+                <button type="submit" id="btn-save" class="btn btn-primary mt-4">
+                    Save to Revision Queue
+                </button>
+                
+                <div id="duplicate-msg" class="hidden mt-2" style="font-size: 0.8rem; color: var(--success); text-align: center; background: #ecfdf5; padding: 0.5rem; border-radius: 6px;">
+                    ✨ Update existing entry
+                </div>
+            </form>
+        </div>
+
+        <div id="state-success" class="state-container hidden">
+            <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
+            <h2 style="color: var(--success)">Saved Successfully!</h2>
+            <p>Added to your revision schedule. Keep up the streak!</p>
+            <div style="display: grid; gap: 0.5rem; width: 100%;">
+                <button id="btn-close" class="btn btn-outline">Close Popup</button>
+            </div>
+        </div>
+
+        <div id="state-error" class="state-container hidden">
+            <div style="font-size: 3rem; margin-bottom: 0.5rem;">⚠️</div>
+            <h2 style="color: var(--error)">Save Failed</h2>
+            <p id="error-msg">Network error occurred.</p>
+            <button id="btn-retry" class="btn btn-outline">Try Again</button>
+        </div>
+
+    </div>
+
+    <script src="popup.js" type="module"></script>
+</body>
+</html>
