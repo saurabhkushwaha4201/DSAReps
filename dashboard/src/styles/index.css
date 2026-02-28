@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+/* =========================
+   Design Tokens (Theme)
+   ========================= */
+:root {
+  --font-sans: 'Inter', sans-serif;
+
+  --background: #f8fafc;
+  --surface: #ffffff;
+
+  --primary: #3b82f6;
+  --secondary: #64748b;
+  --accent: #8b5cf6;
+  --success: #10b981;
+
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+}
+
+/* =========================
+   Base Styles
+   ========================= */
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--background);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* =========================
+   Custom Scrollbar
+   ========================= */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--secondary) 20%, transparent);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--secondary) 40%, transparent);
+}
+
+/* =========================
+   Hide Scrollbar Utility
+   ========================= */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
