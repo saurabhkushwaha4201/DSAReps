@@ -17,8 +17,6 @@ const RevisionCard = ({ problem, onRevise }) => {
         }, 500); // match duration
     };
 
-    const isOverdue = new Date(problem.nextReviewDate) < new Date().setHours(0, 0, 0, 0);
-
     return (
         <AnimatePresence>
             {!isExiting && (
@@ -30,12 +28,12 @@ const RevisionCard = ({ problem, onRevise }) => {
                 >
                     <Card className={cn(
                         "flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 gap-4 border-l-4 hover:-translate-y-1 transition-transform duration-300",
-                        isOverdue ? "border-l-red-500" : "border-l-orange-400"
+                        "border-l-indigo-400"
                     )}>
                         <div className="space-y-2">
                             <div className="flex items-center gap-3">
-                                <Badge variant={isOverdue ? "destructive" : "secondary"} className={isOverdue ? "" : "bg-orange-100 text-orange-800"}>
-                                    {isOverdue ? "Overdue" : "Due Today"}
+                                <Badge variant="secondary">
+                                    {problem.difficulty || 'Review'}
                                 </Badge>
                                 <span className="text-sm text-slate-400 flex items-center gap-1">
                                     <Clock className="w-3 h-3" /> Last reviewed: {new Date(problem.lastRevised).toLocaleDateString()}

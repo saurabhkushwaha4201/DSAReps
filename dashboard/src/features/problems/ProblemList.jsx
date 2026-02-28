@@ -2,22 +2,20 @@ import React, { useState, useEffect, useMemo } from 'react';
 import ProblemCard from './ProblemCard';
 import { NotesDrawer } from '../../components/notes/NotesDrawer';
 import toast from 'react-hot-toast';
-import { getAllProblems, reviseProblem, archiveProblem, unarchiveProblem, rescheduleProblem } from '../../api/problem.api';
-import { getWeightedSmartSort } from '../../lib/intelligence';
+import { getAllProblems, archiveProblem, unarchiveProblem } from '../../api/problem.api';
 import { Loader2, ChevronDown } from 'lucide-react';
 
 // --- MOCK DATA (Fallback) ---
 const INITIAL_PROBLEMS = [
-    { _id: '1', title: "Two Sum", difficulty: "Easy", platform: "LeetCode", nextRevisionAt: new Date(Date.now() - 86400000).toISOString(), status: 'active' },
-    { _id: '2', title: "LRU Cache", difficulty: "Medium", platform: "LeetCode", nextRevisionAt: new Date().toISOString(), status: 'active' },
-    { _id: '3', title: "Merge K Lists", difficulty: "Hard", platform: "LeetCode", nextRevisionAt: new Date(Date.now() + 86400000).toISOString(), status: 'active' },
+    { _id: '1', title: "Two Sum", difficulty: "Easy", platform: "LeetCode", nextReviewDate: new Date(Date.now() - 86400000).toISOString(), status: 'active' },
+    { _id: '2', title: "LRU Cache", difficulty: "Medium", platform: "LeetCode", nextReviewDate: new Date().toISOString(), status: 'active' },
+    { _id: '3', title: "Merge K Lists", difficulty: "Hard", platform: "LeetCode", nextReviewDate: new Date(Date.now() + 86400000).toISOString(), status: 'active' },
 ];
 
 export default function ProblemList() {
     const [problems, setProblems] = useState([]);
     const [activeFilter, setActiveFilter] = useState('All');
     const [view, setView] = useState('active'); // 'active' | 'archived'
-    const [smartSort, setSmartSort] = useState(false);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -87,36 +85,10 @@ export default function ProblemList() {
             return view === 'active' ? status !== 'archived' : status === 'archived';
         });
 
-        // C. Smart Sort
-        if (smartSort && view === 'active') {
-            return getWeightedSmartSort(filtered);
-        }
-
-        // Default Sort: Chronological by next revision if available, else standard
-        // (Optional: keep existing order or sort by nextRevisionAt)
         return filtered;
-    }, [problems, activeFilter, view, smartSort]);
+    }, [problems, activeFilter, view]);
 
     // 2. Handlers
-    const handleMarkComplete = async (problem) => {
-        const id = getId(problem);
-        // Optimistic
-        setProblems(prev => prev.map(p =>
-            getId(p) === id ? { ...p, nextRevisionAt: new Date(Date.now() + 86400000).toISOString(), lastRevised: new Date().toISOString() } : p
-        ));
-
-        try {
-            await reviseProblem(id, true);
-            toast.success("Problem marked as revised!", {
-                style: { background: '#333', color: '#fff' },
-                iconTheme: { primary: '#10B981', secondary: '#FFFAEE' },
-            });
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to save revision");
-        }
-    };
-
     const handleArchive = async (id) => {
         setProblems(prev => prev.map(p => getId(p) === id ? { ...p, status: 'archived' } : p));
         try {
@@ -137,18 +109,6 @@ export default function ProblemList() {
         } catch (error) {
             console.error(error);
             toast.error("Failed to restore");
-        }
-    };
-
-    const handleReschedule = async (id, date) => {
-        const isoDate = date.toISOString();
-        setProblems(prev => prev.map(p => getId(p) === id ? { ...p, nextRevisionAt: isoDate } : p));
-        try {
-            await rescheduleProblem(id, isoDate);
-            // Toast already handled in ProblemCard technically but state must update
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to reschedule");
         }
     };
 
@@ -219,18 +179,6 @@ export default function ProblemList() {
                         Archived
                     </button>
                 </div>
-
-                {/* Smart Sort - Simple toggle button (Linear/Notion style) */}
-                <button
-                    onClick={() => setSmartSort(!smartSort)}
-                    disabled={view === 'archived'}
-                    className={`h-9 px-4 rounded-lg text-sm font-medium transition-all ${smartSort
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'bg-transparent border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-700 dark:hover:text-slate-300'
-                        } ${view === 'archived' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                    ✨ Smart Sort
-                </button>
             </div>
 
             {/* Filter Bar - Better spacing and alignment */}
@@ -285,17 +233,16 @@ export default function ProblemList() {
                             <ProblemCard
                                 key={getId(prob)}
                                 problem={prob}
-                                onMarkRevised={handleMarkComplete}
+                                onMarkRevised={() => {}}
                                 onArchive={handleArchive}
                                 onRestore={handleRestore}
-                                onReschedule={handleReschedule}
                                 onOpenNotes={handleOpenNotes}
                             />
                         ))}
                     </>
                 ) : view === 'active' ? (
                     /* Head Start Section - Only for Active view when empty */
-                    <HeadStartSection problems={problems} onReschedule={handleReschedule} onOpenNotes={handleOpenNotes} />
+                    <HeadStartSection problems={problems} onOpenNotes={handleOpenNotes} />
                 ) : (
                     <div className="text-center py-12 text-slate-500 dark:text-slate-400">
                         No archived problems found.
@@ -342,8 +289,8 @@ export default function ProblemList() {
  * HeadStartSection - Shown when all due items are complete
  * Suggests next 3 upcoming problems to get a head start
  */
-function HeadStartSection({ problems, onReschedule, onOpenNotes }) {
-    // Get next 3 upcoming problems (earliest nextRevisionAt)
+function HeadStartSection({ problems, onOpenNotes }) {
+    // Get next 3 upcoming problems (earliest nextReviewDate)
     const upcomingProblems = useMemo(() => {
         return problems
             .filter(p => {
@@ -351,7 +298,7 @@ function HeadStartSection({ problems, onReschedule, onOpenNotes }) {
                 return status === 'active';  // Only active problems
             })
             .filter(p => {
-                const nextDate = p.nextRevisionAt || p.nextReviewDate;
+                const nextDate = p.nextReviewDate;
                 if (!nextDate) return false;
                 const reviewDate = new Date(nextDate);
                 const today = new Date();
@@ -359,8 +306,8 @@ function HeadStartSection({ problems, onReschedule, onOpenNotes }) {
                 return reviewDate > today;  // Future dates only
             })
             .sort((a, b) => {
-                const dateA = new Date(a.nextRevisionAt || a.nextReviewDate);
-                const dateB = new Date(b.nextRevisionAt || b.nextReviewDate);
+                const dateA = new Date(a.nextReviewDate);
+                const dateB = new Date(b.nextReviewDate);
                 return dateA - dateB;
             })
             .slice(0, 3);
@@ -421,7 +368,6 @@ function HeadStartSection({ problems, onReschedule, onOpenNotes }) {
                             onMarkRevised={() => { }}
                             onArchive={() => { }}
                             onRestore={() => { }}
-                            onReschedule={onReschedule}
                             onOpenNotes={onOpenNotes}
                         />
                     ))}

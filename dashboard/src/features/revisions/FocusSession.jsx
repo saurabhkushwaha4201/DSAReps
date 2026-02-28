@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getTodayRevisions, reviseProblem, getAllProblems } from '../../api/problem.api';
+import { getAllProblems } from '../../api/problem.api';
 import { useLocalData } from '../../hooks/useLocalData';
-import { calculateNextReview } from '../../lib/srs';
-import { calculateMastery } from '../../lib/intelligence';
 import { FocusLayout } from '../../components/layout/FocusLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -43,10 +41,8 @@ const FocusSession = () => {
                 if (location.state?.problems) {
                     setQueue(location.state.problems);
                 } else {
-                    // Default: Get Today's revisions
-                    const todayData = await getTodayRevisions();
-                    // Fallback: If no revisions, fetch overdue/all? For now strict revision mode.
-                    setQueue(todayData || []);
+                    const allData = await getAllProblems();
+                    setQueue(allData || []);
                 }
             } catch (e) {
                 toast.error("Failed to load session");
@@ -89,25 +85,10 @@ const FocusSession = () => {
         }
     };
 
-    // Handle Vote
     const handleVote = async (confidence) => {
         if (!currentProblem) return;
 
         try {
-            // SRS Calculation
-            const currentInterval = currentProblem.interval || 1;
-            const { nextDate } = calculateNextReview(currentInterval, confidence);
-
-            // API Call (Assuming reviseProblem accepts date or interval override, 
-            // but standard reviseProblem might just set to tomorrow vs strict SRS. 
-            // If API is strict, we might need to assume 'reviseProblem' just marks done.
-            // But user constraint says: "Use existing API... simple reviseProblem(id, isCorrect)". 
-            // If the API allows passing nextReviewDate, great. If not, we just call reviseProblem(id, true).
-            // Let's assume standard behavior for now to stick to "No Backend Changes".
-            // IF backend ignores passed date, then our SRS is purely client-side visual until backend supports it.
-            // Assumption: We send standard revise signal.
-            await reviseProblem(currentProblem._id || currentProblem.id, true);
-
             // Move Next
             setProblemsReviewed(p => p + 1);
 
@@ -197,17 +178,6 @@ const FocusSession = () => {
                             <a href={currentProblem.url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline flex items-center gap-1">
                                 Open Problem <ExternalLink className="w-3 h-3" />
                             </a>
-                        </div>
-                    </div>
-
-                    {/* Mastery Info */}
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <div className="text-sm font-medium text-slate-500 mb-2">Mastery Score</div>
-                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-emerald-500"
-                                style={{ width: `${calculateMastery(currentProblem)}%` }} // Using our logic lib
-                            />
                         </div>
                     </div>
 

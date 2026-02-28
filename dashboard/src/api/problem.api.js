@@ -1,31 +1,11 @@
 import api from "./axios";
 
 /**
- * Fetch today's problems scheduled for revision
- */
-export const getTodayRevisions = async () => {
-  const res = await api.get("/api/problems/today");
-  return res.data;
-};
-
-/**
  * Fetch all problems with optional filters
  */
 export const getAllProblems = async (filters = {}) => {
   const res = await api.get("/api/problems", {
     params: filters,
-  });
-  return res.data;
-};
-
-/**
- * Submit revision feedback for a problem
- * @param {string} id - problem id
- * @param {boolean} quality - true = comfortable, false = hard
- */
-export const reviseProblem = async (id, quality) => {
-  const res = await api.post(`/api/problems/${id}/revise`, {
-    solvedComfortably: quality,
   });
   return res.data;
 };
@@ -47,18 +27,6 @@ export const unarchiveProblem = async (id) => {
 };
 
 /**
- * Reschedule a problem's next review date without affecting SRS
- * @param {string} id 
- * @param {string|Date} nextDate - ISO string or Date object
- */
-export const rescheduleProblem = async (id, nextDate) => {
-  const res = await api.patch(`/api/problems/${id}/reschedule`, {
-    nextReviewDate: nextDate
-  });
-  return res.data;
-};
-
-/**
  * Update problem notes
  * @param {string} id - problem id
  * @param {string} notes - Markdown notes content
@@ -73,5 +41,34 @@ export const updateNotes = async (id, notes) => {
  */
 export const exportUserData = async () => {
   const res = await api.get('/api/user/export');
+  return res.data;
+};
+
+/**
+ * Fetch today's triage tasks (max 3, Anti-Avalanche)
+ */
+export const getTodayTasks = async () => {
+  const res = await api.get('/api/problems/today');
+  return res.data;
+};
+
+/**
+ * Submit a revision rating for a problem
+ * @param {string} id - problem id
+ * @param {string} rating - FORGOT | SLOW | CLEAN
+ */
+export const reviseProblem = async (id, rating) => {
+  const res = await api.post(`/api/problems/${id}/revise`, {
+    rating,
+    device: 'Web',
+  });
+  return res.data;
+};
+
+/**
+ * Fetch dashboard stats (heatmap, weak clusters, streak)
+ */
+export const getStats = async () => {
+  const res = await api.get('/api/problems/stats');
   return res.data;
 };
