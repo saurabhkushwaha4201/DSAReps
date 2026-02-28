@@ -1,11 +1,13 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Login from './auth/Login';
 import AuthSuccess from './auth/AuthSuccess';
-import Today from './dashboard/Today';
-import AllProblems from './dashboard/AllProblems';
-import Progress from './dashboard/Progress';
-import DashboardLayout from './dashboard/DashboardLayout';
 import ProtectedRoute from './auth/ProtectedRoute';
+import { DashboardLayout } from './components/layout/DashboardLayout';
+import DashboardHome from './features/dashboard/DashboardHome';
+import SettingsPage from './features/dashboard/SettingsPage';
+import ProblemList from './features/problems/ProblemList';
+import FocusMode from './features/revisions/FocusMode';
+import FocusSession from './features/revisions/FocusSession';
 
 export const router = createBrowserRouter([
     {
@@ -17,7 +19,15 @@ export const router = createBrowserRouter([
         element: <AuthSuccess />,
     },
     {
-        path: '/dashboard',
+        path: '/session',
+        element: (
+            <ProtectedRoute>
+                <FocusSession />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: '/',
         element: (
             <ProtectedRoute>
                 <DashboardLayout />
@@ -25,25 +35,25 @@ export const router = createBrowserRouter([
         ),
         children: [
             {
-                path: 'today',
-                element: <Today />,
-            },
-            {
-                path: 'all',
-                element: <AllProblems />,
-            },
-            {
-                path: 'progress',
-                element: <Progress />,
-            },
-            {
                 index: true,
-                element: <Navigate to="/dashboard/today" replace />,
+                element: <DashboardHome />,
+            },
+            {
+                path: 'problems',
+                element: <ProblemList />,
+            },
+            {
+                path: 'focus',
+                element: <FocusMode />,
+            },
+            {
+                path: 'settings',
+                element: <SettingsPage />,
             },
         ],
     },
     {
         path: '*',
-        element: <Navigate to="/dashboard/today" replace />,
+        element: <Navigate to="/" replace />,
     },
 ]);

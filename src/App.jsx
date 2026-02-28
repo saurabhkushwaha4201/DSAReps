@@ -3,7 +3,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './auth/AuthContext';
-import { DashboardProvider } from './dashboard/DashboardContext';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { router } from './routes';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -12,10 +12,10 @@ export default function App() {
     return (
         <GoogleOAuthProvider clientId={googleClientId}>
             <AuthProvider>
-                <DashboardProvider>
+                <ErrorBoundary>
                     <RouterProvider router={router} />
-                    <ToastContainer position="top-right" theme="dark" />
-                </DashboardProvider>
+                </ErrorBoundary>
+                <ToastContainer position="top-right" theme="dark" />
             </AuthProvider>
         </GoogleOAuthProvider>
     );

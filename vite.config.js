@@ -8,6 +8,16 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    port: 5175,
+    port: 5175
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom', 'axios'],
+          ui: ['lucide-react', 'date-fns', 'recharts']
+        }
+      }
+    }
+  }
 })

@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
-import Loader from "../common/Loader";
+import { Loader2 } from "lucide-react";
 
 export default function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -9,8 +9,8 @@ export default function ProtectedRoute({ children }) {
   // While checking auth (restoring token)
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <Loader />
+      <div className="h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
       </div>
     );
   }

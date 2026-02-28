@@ -45,8 +45,17 @@ export const AuthProvider = ({ children }) => {
   const getCurrentUser = () => {
     return localStorage.getItem("token");
   };
+
+  // Derive user from token safely
+  const user = token ? (() => {
+    try {
+      return JSON.parse(atob(token.split('.')[1]));
+    } catch (e) { return null; }
+  })() : null;
+
   const value = {
     token,
+    user,
     isAuthenticated,
     login,
     logout,

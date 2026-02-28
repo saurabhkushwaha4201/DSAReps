@@ -19,18 +19,35 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+import { toast } from 'react-toastify';
+
 // Global auth failure handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // 401: Unauthorized / Token Expired
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
 
-      // Only redirect if running in dashboard (browser)
+      // Prevent flood of toasts if many requests fail at once
+      if (!document.querySelector('.Toastify__toast--error')) {
+        toast.error("Session expired. Please log in again.");
+      }
+
+      // Only redirect if running in dashboard (browser), not extension background potentially
       if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
+        // Small delay to let toast show
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
       }
     }
+
+    // 500 or Network Error
+    if (error.response?.status >= 500 || error.code === 'ERR_NETWORK') {
+      toast.error("Network error. Please try again later.");
+    }
+
     return Promise.reject(error);
   }
 );
