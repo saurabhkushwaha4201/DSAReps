@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { getTodayTasks, reviseProblem } from '../../api/problem.api';
-import { CheckCircle2, AlertTriangle, Zap, RotateCcw } from 'lucide-react';
+import { getTodayTasks, reviseProblem, getUserSettings } from '../../api/problem.api';
+import { CheckCircle2, AlertTriangle, Zap, RotateCcw, Pin, RefreshCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const REVIEW_TYPE_LABEL = {
@@ -13,14 +13,28 @@ export default function TodayTasks() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [ratingId, setRatingId] = useState(null);
+  const [dailyCap, setDailyCap] = useState(3);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchTasks = async () => {
+    try {
+      const data = await getTodayTasks();
+      setTasks(data?.problems || []);
+    } catch (err) {
+      console.error('Failed to load today tasks', err);
+    }
+  };
 
   useEffect(() => {
     async function load() {
       try {
-        const data = await getTodayTasks();
-        setTasks(data?.problems || []);
+        const [, settingsData] = await Promise.all([
+          fetchTasks(),
+          getUserSettings(),
+        ]);
+        setDailyCap(settingsData?.settings?.dailyGoal || 3);
       } catch (err) {
-        console.error('Failed to load today tasks', err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -39,6 +53,20 @@ export default function TodayTasks() {
       toast.error('Rating failed');
     } finally {
       setRatingId(null);
+    }
+  };
+
+  const handleReviseMore = async () => {
+    setRefreshing(true);
+    try {
+      await fetchTasks();
+      if (tasks.length === 0) {
+        toast('No more problems due right now', { icon: '📭' });
+      }
+    } catch {
+      toast.error('Failed to fetch more');
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -61,7 +89,7 @@ export default function TodayTasks() {
           Today's Tasks
         </h3>
         <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
-          {tasks.length}/3
+          {tasks.length}/{dailyCap}
         </span>
       </div>
 
@@ -74,6 +102,14 @@ export default function TodayTasks() {
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             No reviews pending. Enjoy your day.
           </p>
+          <button
+            onClick={handleReviseMore}
+            disabled={refreshing}
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-xl transition-colors disabled:opacity-50"
+          >
+            <RefreshCcw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            Revise More
+          </button>
         </div>
       ) : (
         <div className="space-y-3">
@@ -91,7 +127,7 @@ export default function TodayTasks() {
                 className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl"
               >
                 <div className="flex items-start justify-between mb-2">
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white truncate max-w-[200px]">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white truncate max-w-50">
                     {task.title}
                   </h4>
                   <span
@@ -113,6 +149,11 @@ export default function TodayTasks() {
                     {reviewInfo.label}
                   </span>
                   <span>Stability: {task.stabilityScore}%</span>
+                  {task.isManualOverride && (
+                    <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-medium">
+                      <Pin className="w-3 h-3" /> Pinned
+                    </span>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">

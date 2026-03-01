@@ -68,7 +68,7 @@ export default function InterviewMode() {
   return (
     <div className={`border rounded-2xl p-6 transition-colors ${
       active
-        ? 'bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-red-200 dark:border-red-800'
+        ? 'bg-linear-to-br from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-red-200 dark:border-red-800'
         : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
     }`}>
       <div className="flex items-center justify-between mb-3">
@@ -101,7 +101,7 @@ export default function InterviewMode() {
           </p>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
             <div
-              className="h-2 rounded-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-500"
+              className="h-2 rounded-full bg-linear-to-r from-red-500 to-orange-500 transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>

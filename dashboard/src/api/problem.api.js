@@ -1,6 +1,15 @@
 import api from "./axios";
 
 /**
+ * Save a new problem (manual add from dashboard)
+ * @param {Object} data - { platform, title, url, difficulty, attemptType, notes? }
+ */
+export const saveProblem = async (data) => {
+  const res = await api.post('/api/problems', data);
+  return res.data;
+};
+
+/**
  * Fetch all problems with optional filters
  */
 export const getAllProblems = async (filters = {}) => {
@@ -70,5 +79,32 @@ export const reviseProblem = async (id, rating) => {
  */
 export const getStats = async () => {
   const res = await api.get('/api/problems/stats');
+  return res.data;
+};
+
+/**
+ * Reschedule a problem to a specific date (manual override)
+ * @param {string} id - problem id
+ * @param {string} date - ISO date string (YYYY-MM-DD)
+ */
+export const rescheduleProblem = async (id, date) => {
+  const res = await api.put(`/api/problems/${id}/reschedule`, { date });
+  return res.data;
+};
+
+/**
+ * Fetch user settings (revision intervals + daily cap)
+ */
+export const getUserSettings = async () => {
+  const res = await api.get('/api/user/settings');
+  return res.data;
+};
+
+/**
+ * Update user settings
+ * @param {Object} settings - { revisionIntervals?: { hard, medium, easy }, dailyGoal?: number }
+ */
+export const updateUserSettings = async (settings) => {
+  const res = await api.put('/api/user/settings', settings);
   return res.data;
 };

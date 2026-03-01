@@ -38,7 +38,7 @@ export function SessionSummary({ isOpen, onClose, stats }) {
             <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-300">
 
                 {/* Header with gradient */}
-                <div className="relative bg-gradient-to-br from-indigo-500 to-purple-600 p-8 text-center">
+                <div className="relative bg-linear-to-br from-indigo-500 to-purple-600 p-8 text-center">
                     <div className="absolute top-0 left-0 right-0 h-full opacity-20">
                         <div className="absolute top-4 left-4 w-16 h-16 border-2 border-white rounded-full animate-pulse" />
                         <div className="absolute bottom-4 right-4 w-12 h-12 border-2 border-white rounded-full animate-pulse delay-75" />
@@ -73,7 +73,7 @@ export function SessionSummary({ isOpen, onClose, stats }) {
                         </div>
 
                         {/* XP Earned */}
-                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-4 text-center border border-amber-200 dark:border-amber-800">
+                        <div className="bg-linear-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-4 text-center border border-amber-200 dark:border-amber-800">
                             <div className="flex items-center justify-center gap-1">
                                 <Sparkles className="w-5 h-5 text-amber-500" />
                                 <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">
@@ -88,7 +88,7 @@ export function SessionSummary({ isOpen, onClose, stats }) {
 
                     {/* Time Spent */}
                     <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center shrink-0">
                             <TrendingUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                         </div>
                         <div className="flex-1">
@@ -103,7 +103,7 @@ export function SessionSummary({ isOpen, onClose, stats }) {
 
                     {/* Perfect Streak Bonus */}
                     {perfectStreak && (
-                        <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                        <div className="p-4 bg-linear-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
                             <div className="flex items-center gap-2">
                                 <span className="text-2xl">🔥</span>
                                 <div>

@@ -108,7 +108,7 @@ export default function ContributionHeatmap({ heatmap = [] }) {
             {DAYS.map((day, i) => (
               <span
                 key={i}
-                className="text-[10px] text-slate-400 dark:text-slate-500 h-[12px] w-6 flex items-center"
+                className="text-[10px] text-slate-400 dark:text-slate-500 h-3 w-6 flex items-center"
               >
                 {day}
               </span>
@@ -121,7 +121,7 @@ export default function ContributionHeatmap({ heatmap = [] }) {
               {week.map((day, di) => (
                 <div
                   key={di}
-                  className={`w-[12px] h-[12px] rounded-[2px] ${
+                  className={`w-3 h-3 rounded-xs ${
                     day.level === -1
                       ? 'bg-transparent'
                       : LEVEL_COLORS[day.level]
@@ -138,7 +138,7 @@ export default function ContributionHeatmap({ heatmap = [] }) {
       <div className="flex items-center gap-1 mt-3 justify-end">
         <span className="text-[10px] text-slate-400 dark:text-slate-500 mr-1">Less</span>
         {LEVEL_COLORS.map((cls, i) => (
-          <div key={i} className={`w-[12px] h-[12px] rounded-[2px] ${cls}`} />
+          <div key={i} className={`w-3 h-3 rounded-xs ${cls}`} />
         ))}
         <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-1">More</span>
       </div>

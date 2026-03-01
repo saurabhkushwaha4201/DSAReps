@@ -79,12 +79,12 @@ const DashboardHome = () => {
 const DashboardSkeleton = () => (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-            <Skeleton className="h-[280px]" />
-            <Skeleton className="h-[200px]" />
+            <Skeleton className="h-70" />
+            <Skeleton className="h-50" />
         </div>
         <div className="space-y-6">
-            <Skeleton className="h-[240px]" />
-            <Skeleton className="h-[160px]" />
+            <Skeleton className="h-60" />
+            <Skeleton className="h-40" />
         </div>
     </div>
 );
