@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ProblemCard from './ProblemCard';
+import AddProblemModal from './AddProblemModal';
 import { NotesDrawer } from '../../components/notes/NotesDrawer';
 import toast from 'react-hot-toast';
 import { getAllProblems, archiveProblem, unarchiveProblem } from '../../api/problem.api';
-import { Loader2, ChevronDown } from 'lucide-react';
+import { Loader2, ChevronDown, Plus } from 'lucide-react';
 
 // --- MOCK DATA (Fallback) ---
 const INITIAL_PROBLEMS = [
@@ -23,6 +24,8 @@ export default function ProblemList() {
 
     // Global NotesDrawer state
     const [activeProblem, setActiveProblem] = useState(null);
+    // Add Problem modal
+    const [showAddModal, setShowAddModal] = useState(false);
 
     // Helpers
     const getId = (prob) => prob._id || prob.id;
@@ -144,14 +147,24 @@ export default function ProblemList() {
                 active: 'bg-red-600 text-white border border-red-600'
             },
             'LeetCode': {
-                // Orange with better contrast - lighter text on transparent bg
                 base: 'bg-orange-50 dark:bg-[rgba(255,161,22,0.15)] text-orange-700 dark:text-[#FFB84D] border border-transparent dark:border-orange-500/30',
                 active: 'bg-orange-500 text-white border border-orange-500'
             },
             'Codeforces': {
-                // Blue with better contrast - lighter text on transparent bg
                 base: 'bg-blue-50 dark:bg-[rgba(49,140,231,0.15)] text-blue-700 dark:text-[#66B2FF] border border-transparent dark:border-blue-500/30',
                 active: 'bg-blue-600 text-white border border-blue-600'
+            },
+            'CSES': {
+                base: 'bg-cyan-50 dark:bg-[rgba(6,182,212,0.15)] text-cyan-700 dark:text-[#67E8F9] border border-transparent dark:border-cyan-500/30',
+                active: 'bg-cyan-600 text-white border border-cyan-600'
+            },
+            'GFG': {
+                base: 'bg-green-50 dark:bg-[rgba(34,197,94,0.15)] text-green-700 dark:text-[#86EFAC] border border-transparent dark:border-green-500/30',
+                active: 'bg-green-600 text-white border border-green-600'
+            },
+            'Other': {
+                base: 'bg-gray-50 dark:bg-gray-500/15 text-gray-700 dark:text-gray-300 border border-transparent dark:border-gray-500/30',
+                active: 'bg-gray-600 text-white border border-gray-600'
             },
         };
         return isActive ? styles[filter]?.active : styles[filter]?.base;
@@ -162,7 +175,7 @@ export default function ProblemList() {
     return (
         <div className="space-y-8">
 
-            {/* Header: Tabs & Sort - always on same line */}
+            {/* Header: Tabs & Add Button */}
             <div className="flex items-center justify-between gap-3">
                 {/* Tabs - consistent height h-9 */}
                 <div className="flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-lg w-fit">
@@ -179,6 +192,15 @@ export default function ProblemList() {
                         Archived
                     </button>
                 </div>
+
+                {/* Add Problem button */}
+                <button
+                    onClick={() => setShowAddModal(true)}
+                    className="h-9 px-4 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-1.5"
+                >
+                    <Plus className="w-4 h-4" />
+                    <span className="hidden sm:inline">Add Problem</span>
+                </button>
             </div>
 
             {/* Filter Bar - Better spacing and alignment */}
@@ -197,9 +219,9 @@ export default function ProblemList() {
                             </button>
                         ))}
                     </div>
-                    {/* Row 2: Platform filters - 2 equal columns matching row above */}
-                    <div className="grid grid-cols-2 gap-1.5">
-                        {['LeetCode', 'Codeforces'].map((filter) => (
+                    {/* Row 2: Platform filters */}
+                    <div className="grid grid-cols-3 gap-1.5">
+                        {['LeetCode', 'Codeforces', 'CSES', 'GFG', 'Other'].map((filter) => (
                             <button
                                 key={filter}
                                 onClick={() => setActiveFilter(filter)}
@@ -213,7 +235,7 @@ export default function ProblemList() {
 
                 {/* Desktop: Single row */}
                 <div className="hidden md:flex items-center gap-2">
-                    {['All', 'Easy', 'Medium', 'Hard', 'LeetCode', 'Codeforces'].map((filter) => (
+                    {['All', 'Easy', 'Medium', 'Hard', 'LeetCode', 'Codeforces', 'CSES', 'GFG', 'Other'].map((filter) => (
                         <button
                             key={filter}
                             onClick={() => setActiveFilter(filter)}
@@ -281,6 +303,13 @@ export default function ProblemList() {
                 initialNotes={activeProblem?.notes || ''}
                 onNotesUpdate={handleNotesUpdate}
             />
+
+            {/* Add Problem Modal */}
+            <AddProblemModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onAdded={() => loadProblems(1)}
+            />
         </div>
     );
 }
@@ -316,14 +345,14 @@ function HeadStartSection({ problems, onOpenNotes }) {
     if (upcomingProblems.length === 0) {
         return (
             <div className="text-center py-16">
-                <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-full flex items-center justify-center">
+                <div className="w-20 h-20 mx-auto mb-4 bg-linear-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-full flex items-center justify-center">
                     <span className="text-4xl">🎯</span>
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
                     Mission Complete!
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                    You're all caught up! No active problems found. Add more problems from LeetCode or Codeforces.
+                    You're all caught up! No active problems found. Add more problems from any supported platform.
                 </p>
             </div>
         );
@@ -332,7 +361,7 @@ function HeadStartSection({ problems, onOpenNotes }) {
     return (
         <div className="space-y-6">
             {/* Success Message */}
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-6 text-center">
+            <div className="bg-linear-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-6 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-lg">
                     <span className="text-3xl">🎉</span>
                 </div>
@@ -353,7 +382,7 @@ function HeadStartSection({ problems, onOpenNotes }) {
                             Get a Head Start
                         </h4>
                     </div>
-                    <div className="flex-1 h-px bg-gradient-to-r from-indigo-200 to-transparent dark:from-indigo-800" />
+                    <div className="flex-1 h-px bg-linear-to-r from-indigo-200 to-transparent dark:from-indigo-800" />
                 </div>
 
                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">

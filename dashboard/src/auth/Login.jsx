@@ -70,22 +70,22 @@ export default function Login() {
         // 1. Background Container (Dark blue gradient with subtle glows)
         <div className="relative min-h-screen flex items-center justify-center bg-[#050A18] overflow-hidden font-sans antialiased selection:bg-blue-500/30">
             {/* Ambient Glows */}
-            <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[150px] pointer-events-none" />
-            <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-indigo-800/20 rounded-full blur-[150px] pointer-events-none" />
+            <div className="absolute top-[-20%] left-[-10%] w-150 h-150 bg-blue-600/20 rounded-full blur-[150px] pointer-events-none" />
+            <div className="absolute bottom-[-20%] right-[-10%] w-150 h-150 bg-indigo-800/20 rounded-full blur-[150px] pointer-events-none" />
 
             {/* 2. Main Login Card */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }} // Smooth cubic-bezier
-                className="relative z-10 w-full max-w-[420px] p-4"
+                className="relative z-10 w-full max-w-105 p-4"
             >
                 <div className="bg-[#0A1124]/90 backdrop-blur-xl border border-white/10 p-10 rounded-[2.5rem] shadow-2xl shadow-black/50">
 
                     {/* Header Section */}
                     <div className="flex flex-col items-center text-center mb-10">
                         {/* Logo Icon */}
-                        <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-700 mb-6 shadow-lg shadow-blue-500/30 ring-1 ring-white/20">
+                        <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-b from-blue-500 to-blue-700 mb-6 shadow-lg shadow-blue-500/30 ring-1 ring-white/20">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white">
                                 <path d="M18.375 2.25c-1.035 0-1.875.84-1.875 1.875v15.75c0 1.035.84 1.875 1.875 1.875h.75c1.035 0 1.875-.84 1.875-1.875V4.125c0-1.035-.84-1.875-1.875-1.875h-.75zM9.75 8.625c-1.035 0-1.875.84-1.875 1.875v9.375c0 1.035.84 1.875 1.875 1.875h.75c1.035 0 1.875-.84 1.875-1.875V10.5c0-1.035-.84-1.875-1.875-1.875h-.75zM3 13.125c-1.035 0-1.875.84-1.875 1.875v4.875c0 1.035.84 1.875 1.875 1.875h.75c1.035 0 1.875-.84 1.875-1.875v-4.875c0-1.035-.84-1.875-1.875-1.875h-.75z" />
                             </svg>
@@ -128,7 +128,7 @@ export default function Login() {
                                 <motion.div
                                     key="loading"
                                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                    className="w-full h-[50px] rounded-full bg-blue-600/20 flex items-center justify-center gap-3 border border-blue-500/30"
+                                    className="w-full h-12.5ounded-full bg-blue-600/20 flex items-center justify-center gap-3 border border-blue-500/30"
                                 >
                                     <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
                                     <span className="text-blue-100 text-sm font-semibold tracking-wide">Connecting...</span>

@@ -68,13 +68,13 @@ export function ReschedulePopover({ isOpen, onClose, onSelect, triggerRef }) {
         <>
             {/* Backdrop */}
             <div
-                className="fixed inset-0 z-[100] bg-black/10"
+                className="fixed inset-0 z-100 bg-black/10"
                 onClick={onClose}
             />
 
             {/* Popover - positioned exactly where calculated */}
             <div
-                className="fixed z-[101] w-72 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+                className="fixed z-101 w-72 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
                 style={{
                     top: position.top,
                     left: position.left,
@@ -83,7 +83,7 @@ export function ReschedulePopover({ isOpen, onClose, onSelect, triggerRef }) {
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500">
+                <div className="flex justify-between items-center px-4 py-3 bg-linear-to-r from-indigo-500 to-purple-500">
                     <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-white" />
                         <h4 className="text-sm font-semibold text-white">Reschedule</h4>
@@ -97,7 +97,7 @@ export function ReschedulePopover({ isOpen, onClose, onSelect, triggerRef }) {
                 </div>
 
                 {/* Quick Options */}
-                <div className="p-2 max-h-[200px] overflow-y-auto">
+                <div className="p-2 max-h-50 overflow-y-auto">
                     {presets.map((p) => (
                         <button
                             key={p.label}

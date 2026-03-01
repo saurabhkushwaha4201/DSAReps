@@ -249,20 +249,20 @@ const FocusSession = () => {
                         <div className="flex gap-3">
                             <Button
                                 variant="outline"
-                                className="border-red-100 hover:bg-red-50 hover:text-red-600 hover:border-red-200 min-w-[120px]"
+                                className="border-red-100 hover:bg-red-50 hover:text-red-600 hover:border-red-200 min-w-30"
                                 onClick={() => handleVote('STRUGGLED')}
                             >
                                 😕 Struggled
                             </Button>
                             <Button
                                 variant="outline"
-                                className="border-slate-200 hover:bg-slate-50 min-w-[120px]"
+                                className="border-slate-200 hover:bg-slate-50 min-w-30"
                                 onClick={() => handleVote('OKAY')}
                             >
                                 😐 Okay
                             </Button>
                             <Button
-                                className="bg-emerald-600 hover:bg-emerald-700 min-w-[140px] shadow-lg shadow-emerald-200"
+                                className="bg-emerald-600 hover:bg-emerald-700 min-w-35 shadow-lg shadow-emerald-200"
                                 onClick={() => handleVote('MASTERED')}
                             >
                                 😎 Mastered
