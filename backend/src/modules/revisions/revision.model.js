@@ -21,7 +21,7 @@ const revisionLogSchema = new mongoose.Schema(
         },
         rating: {
             type: String,
-            enum: ['AGAIN', 'HARD', 'GOOD', 'EASY'],
+            enum: ['AGAIN', 'HARD', 'GOOD', 'EASY', 'FORGOT', 'SLOW', 'CLEAN'],
             required: true,
         },
         timeTaken: {

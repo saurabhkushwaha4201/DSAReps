@@ -262,8 +262,64 @@
         <div id="state-unsupported" class="state-container hidden">
             <div style="font-size: 3rem; margin-bottom: 1rem;">🧩</div>
             <h2>No Problem Found</h2>
-            <p>Navigate to a <b>LeetCode</b> or <b>Codeforces</b> problem page to activate the tracker.</p>
-            <button id="btn-open-lc" class="btn btn-outline">Go to LeetCode</button>
+            <p>Navigate to a <b>LeetCode</b>, <b>Codeforces</b>, <b>CSES</b>, or <b>GFG</b> problem page to auto-detect.</p>
+            <div style="display: grid; gap: 0.5rem; width: 100%;">
+                <button id="btn-open-lc" class="btn btn-outline">Go to LeetCode</button>
+                <button id="btn-manual-track" class="btn btn-primary" style="font-size: 0.85rem;">+ Track Manually</button>
+            </div>
+        </div>
+
+        <div id="state-manual" class="hidden">
+            <div class="problem-card-header">
+                <div class="flex-between">
+                    <span class="platform-badge" style="background: var(--primary); color: white;">Manual Entry</span>
+                    <button id="btn-back-manual" class="link-icon" style="background:none; border:none; padding:0; cursor:pointer;">
+                        &larr; Back
+                    </button>
+                </div>
+            </div>
+
+            <form id="manual-form">
+                <div class="input-group">
+                    <label>Problem URL <span style="color: var(--error);">*</span></label>
+                    <input type="url" id="manual-url" placeholder="https://leetcode.com/problems/two-sum/" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Title <span style="color: var(--error);">*</span></label>
+                    <input type="text" id="manual-title" placeholder="Two Sum" required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-group">
+                        <label>Platform</label>
+                        <select id="manual-platform">
+                            <option value="leetcode">LeetCode</option>
+                            <option value="codeforces">Codeforces</option>
+                            <option value="cses">CSES</option>
+                            <option value="gfg">GFG</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Difficulty</label>
+                        <select id="manual-difficulty">
+                            <option value="easy">🟢 Easy</option>
+                            <option value="medium" selected>🟡 Medium</option>
+                            <option value="hard">🔴 Hard</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Quick Notes</label>
+                    <textarea id="manual-notes" placeholder="Key patterns, approach..." rows="2"></textarea>
+                </div>
+
+                <button type="submit" id="btn-manual-save" class="btn btn-primary mt-4">
+                    Track Problem
+                </button>
+            </form>
         </div>
 
         <div id="state-form" class="hidden">
@@ -308,7 +364,7 @@
                 </div>
 
                 <button type="submit" id="btn-save" class="btn btn-primary mt-4">
-                    Save to Revision Queue
+                    Track Problem
                 </button>
                 
                 <div id="duplicate-msg" class="hidden mt-2" style="font-size: 0.8rem; color: var(--success); text-align: center; background: #ecfdf5; padding: 0.5rem; border-radius: 6px;">
@@ -320,7 +376,7 @@
         <div id="state-success" class="state-container hidden">
             <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
             <h2 style="color: var(--success)">Saved Successfully!</h2>
-            <p>Added to your revision schedule. Keep up the streak!</p>
+            <p>Problem saved to your tracker!</p>
             <div style="display: grid; gap: 0.5rem; width: 100%;">
                 <button id="btn-close" class="btn btn-outline">Close Popup</button>
             </div>

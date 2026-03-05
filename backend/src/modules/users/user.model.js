@@ -33,10 +33,24 @@ const userSchema = new mongoose.Schema(
     dailyGoal: {
       type: Number,
       default: 3,
+      min: 1,
+      max: 10,
+    },
+    revisionIntervals: {
+      hard: { type: Number, default: 1, min: 1, max: 30 },
+      medium: { type: Number, default: 3, min: 1, max: 30 },
+      easy: { type: Number, default: 5, min: 1, max: 30 },
     },
     timezone: {
       type: String,
-      default: 'Asia/Kolkata', // Prompt example default
+      default: 'Asia/Kolkata',
+    },
+
+    // ── Silent Streak Tracking ──────────────────────────────
+    streak: {
+      current: { type: Number, default: 0 },
+      longest: { type: Number, default: 0 },
+      lastActiveDate: { type: Date, default: null },
     },
   },
   {

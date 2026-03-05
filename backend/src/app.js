@@ -4,7 +4,7 @@ const cors = require('cors');
 const authRoutes = require('./modules/auth/auth.routes');
 const problemRoutes = require('./modules/problems/problem.routes');
 const revisionRoutes = require('./modules/revisions/revision.routes');
-const notificationRoutes = require('./modules/notifications/notification.routes');
+const userRoutes = require('./modules/users/user.routes');
 
 const app = express();
 
@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/problems', problemRoutes);
 app.use('/api/revisions', revisionRoutes);
-app.use('/api/notifications', notificationRoutes);
+app.use('/api/user', userRoutes);
 
 // Custom Requested Routes
 const revisionController = require('./modules/revisions/revision.controller');
