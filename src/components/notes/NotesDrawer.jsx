@@ -133,11 +133,11 @@ export function NotesDrawer({ isOpen, onClose, problemId, initialNotes = '', onN
 
             {/* Drawer */}
             <div
-                className={`fixed right-0 top-0 bottom-0 w-full md:w-[450px] lg:w-[550px] bg-white dark:bg-slate-900 shadow-2xl z-50 transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'
+                className={`fixed right-0 top-0 bottom-0 w-full md:w-112.5 lg:w-137.5 bg-white dark:bg-slate-900 shadow-2xl z-50 transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'
                     }`}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-800">
+                <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-700 bg-linear-to-r from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-800">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center shadow-lg">
                             <span className="text-xl">📝</span>
@@ -216,7 +216,7 @@ export function NotesDrawer({ isOpen, onClose, problemId, initialNotes = '', onN
                             />
 
                             {/* Quick Tips */}
-                            <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
+                            <div className="p-4 bg-linear-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
                                 <h4 className="text-sm font-semibold text-indigo-900 dark:text-indigo-300 mb-2">
                                     💡 Markdown Tips
                                 </h4>
@@ -248,14 +248,14 @@ export function NotesDrawer({ isOpen, onClose, problemId, initialNotes = '', onN
 
                             {/* Rendered Notes */}
                             <div
-                                className="prose prose-slate dark:prose-invert max-w-none p-5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 min-h-[200px]"
+                                className="prose prose-slate dark:prose-invert max-w-none p-5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 min-h-50"
                                 dangerouslySetInnerHTML={{ __html: renderMarkdown(notes) }}
                             />
 
                             {!notes && (
                                 <button
                                     onClick={handleSwitchToEdit}
-                                    className="w-full py-4 mt-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
+                                    className="w-full py-4 mt-4 bg-linear-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
                                 >
                                     ✏️ Add Notes
                                 </button>

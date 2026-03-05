@@ -1,23 +1,22 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ProblemCard from './ProblemCard';
+import AddProblemModal from './AddProblemModal';
 import { NotesDrawer } from '../../components/notes/NotesDrawer';
 import toast from 'react-hot-toast';
-import { getAllProblems, reviseProblem, archiveProblem, unarchiveProblem, rescheduleProblem } from '../../api/problem.api';
-import { getWeightedSmartSort } from '../../lib/intelligence';
-import { Loader2, ChevronDown } from 'lucide-react';
+import { getAllProblems, archiveProblem, unarchiveProblem } from '../../api/problem.api';
+import { Loader2, ChevronDown, Plus } from 'lucide-react';
 
 // --- MOCK DATA (Fallback) ---
 const INITIAL_PROBLEMS = [
-    { _id: '1', title: "Two Sum", difficulty: "Easy", platform: "LeetCode", nextRevisionAt: new Date(Date.now() - 86400000).toISOString(), status: 'active' },
-    { _id: '2', title: "LRU Cache", difficulty: "Medium", platform: "LeetCode", nextRevisionAt: new Date().toISOString(), status: 'active' },
-    { _id: '3', title: "Merge K Lists", difficulty: "Hard", platform: "LeetCode", nextRevisionAt: new Date(Date.now() + 86400000).toISOString(), status: 'active' },
+    { _id: '1', title: "Two Sum", difficulty: "Easy", platform: "LeetCode", nextReviewDate: new Date(Date.now() - 86400000).toISOString(), status: 'active' },
+    { _id: '2', title: "LRU Cache", difficulty: "Medium", platform: "LeetCode", nextReviewDate: new Date().toISOString(), status: 'active' },
+    { _id: '3', title: "Merge K Lists", difficulty: "Hard", platform: "LeetCode", nextReviewDate: new Date(Date.now() + 86400000).toISOString(), status: 'active' },
 ];
 
 export default function ProblemList() {
     const [problems, setProblems] = useState([]);
     const [activeFilter, setActiveFilter] = useState('All');
     const [view, setView] = useState('active'); // 'active' | 'archived'
-    const [smartSort, setSmartSort] = useState(false);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -25,6 +24,8 @@ export default function ProblemList() {
 
     // Global NotesDrawer state
     const [activeProblem, setActiveProblem] = useState(null);
+    // Add Problem modal
+    const [showAddModal, setShowAddModal] = useState(false);
 
     // Helpers
     const getId = (prob) => prob._id || prob.id;
@@ -87,36 +88,10 @@ export default function ProblemList() {
             return view === 'active' ? status !== 'archived' : status === 'archived';
         });
 
-        // C. Smart Sort
-        if (smartSort && view === 'active') {
-            return getWeightedSmartSort(filtered);
-        }
-
-        // Default Sort: Chronological by next revision if available, else standard
-        // (Optional: keep existing order or sort by nextRevisionAt)
         return filtered;
-    }, [problems, activeFilter, view, smartSort]);
+    }, [problems, activeFilter, view]);
 
     // 2. Handlers
-    const handleMarkComplete = async (problem) => {
-        const id = getId(problem);
-        // Optimistic
-        setProblems(prev => prev.map(p =>
-            getId(p) === id ? { ...p, nextRevisionAt: new Date(Date.now() + 86400000).toISOString(), lastRevised: new Date().toISOString() } : p
-        ));
-
-        try {
-            await reviseProblem(id, true);
-            toast.success("Problem marked as revised!", {
-                style: { background: '#333', color: '#fff' },
-                iconTheme: { primary: '#10B981', secondary: '#FFFAEE' },
-            });
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to save revision");
-        }
-    };
-
     const handleArchive = async (id) => {
         setProblems(prev => prev.map(p => getId(p) === id ? { ...p, status: 'archived' } : p));
         try {
@@ -137,18 +112,6 @@ export default function ProblemList() {
         } catch (error) {
             console.error(error);
             toast.error("Failed to restore");
-        }
-    };
-
-    const handleReschedule = async (id, date) => {
-        const isoDate = date.toISOString();
-        setProblems(prev => prev.map(p => getId(p) === id ? { ...p, nextRevisionAt: isoDate } : p));
-        try {
-            await rescheduleProblem(id, isoDate);
-            // Toast already handled in ProblemCard technically but state must update
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to reschedule");
         }
     };
 
@@ -184,14 +147,24 @@ export default function ProblemList() {
                 active: 'bg-red-600 text-white border border-red-600'
             },
             'LeetCode': {
-                // Orange with better contrast - lighter text on transparent bg
                 base: 'bg-orange-50 dark:bg-[rgba(255,161,22,0.15)] text-orange-700 dark:text-[#FFB84D] border border-transparent dark:border-orange-500/30',
                 active: 'bg-orange-500 text-white border border-orange-500'
             },
             'Codeforces': {
-                // Blue with better contrast - lighter text on transparent bg
                 base: 'bg-blue-50 dark:bg-[rgba(49,140,231,0.15)] text-blue-700 dark:text-[#66B2FF] border border-transparent dark:border-blue-500/30',
                 active: 'bg-blue-600 text-white border border-blue-600'
+            },
+            'CSES': {
+                base: 'bg-cyan-50 dark:bg-[rgba(6,182,212,0.15)] text-cyan-700 dark:text-[#67E8F9] border border-transparent dark:border-cyan-500/30',
+                active: 'bg-cyan-600 text-white border border-cyan-600'
+            },
+            'GFG': {
+                base: 'bg-green-50 dark:bg-[rgba(34,197,94,0.15)] text-green-700 dark:text-[#86EFAC] border border-transparent dark:border-green-500/30',
+                active: 'bg-green-600 text-white border border-green-600'
+            },
+            'Other': {
+                base: 'bg-gray-50 dark:bg-gray-500/15 text-gray-700 dark:text-gray-300 border border-transparent dark:border-gray-500/30',
+                active: 'bg-gray-600 text-white border border-gray-600'
             },
         };
         return isActive ? styles[filter]?.active : styles[filter]?.base;
@@ -202,7 +175,7 @@ export default function ProblemList() {
     return (
         <div className="space-y-8">
 
-            {/* Header: Tabs & Sort - always on same line */}
+            {/* Header: Tabs & Add Button */}
             <div className="flex items-center justify-between gap-3">
                 {/* Tabs - consistent height h-9 */}
                 <div className="flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-lg w-fit">
@@ -220,16 +193,13 @@ export default function ProblemList() {
                     </button>
                 </div>
 
-                {/* Smart Sort - Simple toggle button (Linear/Notion style) */}
+                {/* Add Problem button */}
                 <button
-                    onClick={() => setSmartSort(!smartSort)}
-                    disabled={view === 'archived'}
-                    className={`h-9 px-4 rounded-lg text-sm font-medium transition-all ${smartSort
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'bg-transparent border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-700 dark:hover:text-slate-300'
-                        } ${view === 'archived' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={() => setShowAddModal(true)}
+                    className="h-9 px-4 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-1.5"
                 >
-                    ✨ Smart Sort
+                    <Plus className="w-4 h-4" />
+                    <span className="hidden sm:inline">Add Problem</span>
                 </button>
             </div>
 
@@ -249,9 +219,9 @@ export default function ProblemList() {
                             </button>
                         ))}
                     </div>
-                    {/* Row 2: Platform filters - 2 equal columns matching row above */}
-                    <div className="grid grid-cols-2 gap-1.5">
-                        {['LeetCode', 'Codeforces'].map((filter) => (
+                    {/* Row 2: Platform filters */}
+                    <div className="grid grid-cols-3 gap-1.5">
+                        {['LeetCode', 'Codeforces', 'CSES', 'GFG', 'Other'].map((filter) => (
                             <button
                                 key={filter}
                                 onClick={() => setActiveFilter(filter)}
@@ -265,7 +235,7 @@ export default function ProblemList() {
 
                 {/* Desktop: Single row */}
                 <div className="hidden md:flex items-center gap-2">
-                    {['All', 'Easy', 'Medium', 'Hard', 'LeetCode', 'Codeforces'].map((filter) => (
+                    {['All', 'Easy', 'Medium', 'Hard', 'LeetCode', 'Codeforces', 'CSES', 'GFG', 'Other'].map((filter) => (
                         <button
                             key={filter}
                             onClick={() => setActiveFilter(filter)}
@@ -285,17 +255,16 @@ export default function ProblemList() {
                             <ProblemCard
                                 key={getId(prob)}
                                 problem={prob}
-                                onMarkRevised={handleMarkComplete}
+                                onMarkRevised={() => {}}
                                 onArchive={handleArchive}
                                 onRestore={handleRestore}
-                                onReschedule={handleReschedule}
                                 onOpenNotes={handleOpenNotes}
                             />
                         ))}
                     </>
                 ) : view === 'active' ? (
                     /* Head Start Section - Only for Active view when empty */
-                    <HeadStartSection problems={problems} onReschedule={handleReschedule} onOpenNotes={handleOpenNotes} />
+                    <HeadStartSection problems={problems} onOpenNotes={handleOpenNotes} />
                 ) : (
                     <div className="text-center py-12 text-slate-500 dark:text-slate-400">
                         No archived problems found.
@@ -334,6 +303,13 @@ export default function ProblemList() {
                 initialNotes={activeProblem?.notes || ''}
                 onNotesUpdate={handleNotesUpdate}
             />
+
+            {/* Add Problem Modal */}
+            <AddProblemModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onAdded={() => loadProblems(1)}
+            />
         </div>
     );
 }
@@ -342,8 +318,8 @@ export default function ProblemList() {
  * HeadStartSection - Shown when all due items are complete
  * Suggests next 3 upcoming problems to get a head start
  */
-function HeadStartSection({ problems, onReschedule, onOpenNotes }) {
-    // Get next 3 upcoming problems (earliest nextRevisionAt)
+function HeadStartSection({ problems, onOpenNotes }) {
+    // Get next 3 upcoming problems (earliest nextReviewDate)
     const upcomingProblems = useMemo(() => {
         return problems
             .filter(p => {
@@ -351,7 +327,7 @@ function HeadStartSection({ problems, onReschedule, onOpenNotes }) {
                 return status === 'active';  // Only active problems
             })
             .filter(p => {
-                const nextDate = p.nextRevisionAt || p.nextReviewDate;
+                const nextDate = p.nextReviewDate;
                 if (!nextDate) return false;
                 const reviewDate = new Date(nextDate);
                 const today = new Date();
@@ -359,8 +335,8 @@ function HeadStartSection({ problems, onReschedule, onOpenNotes }) {
                 return reviewDate > today;  // Future dates only
             })
             .sort((a, b) => {
-                const dateA = new Date(a.nextRevisionAt || a.nextReviewDate);
-                const dateB = new Date(b.nextRevisionAt || b.nextReviewDate);
+                const dateA = new Date(a.nextReviewDate);
+                const dateB = new Date(b.nextReviewDate);
                 return dateA - dateB;
             })
             .slice(0, 3);
@@ -369,14 +345,14 @@ function HeadStartSection({ problems, onReschedule, onOpenNotes }) {
     if (upcomingProblems.length === 0) {
         return (
             <div className="text-center py-16">
-                <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-full flex items-center justify-center">
+                <div className="w-20 h-20 mx-auto mb-4 bg-linear-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-full flex items-center justify-center">
                     <span className="text-4xl">🎯</span>
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
                     Mission Complete!
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                    You're all caught up! No active problems found. Add more problems from LeetCode or Codeforces.
+                    You're all caught up! No active problems found. Add more problems from any supported platform.
                 </p>
             </div>
         );
@@ -385,7 +361,7 @@ function HeadStartSection({ problems, onReschedule, onOpenNotes }) {
     return (
         <div className="space-y-6">
             {/* Success Message */}
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-6 text-center">
+            <div className="bg-linear-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-6 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-lg">
                     <span className="text-3xl">🎉</span>
                 </div>
@@ -406,7 +382,7 @@ function HeadStartSection({ problems, onReschedule, onOpenNotes }) {
                             Get a Head Start
                         </h4>
                     </div>
-                    <div className="flex-1 h-px bg-gradient-to-r from-indigo-200 to-transparent dark:from-indigo-800" />
+                    <div className="flex-1 h-px bg-linear-to-r from-indigo-200 to-transparent dark:from-indigo-800" />
                 </div>
 
                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
@@ -421,7 +397,6 @@ function HeadStartSection({ problems, onReschedule, onOpenNotes }) {
                             onMarkRevised={() => { }}
                             onArchive={() => { }}
                             onRestore={() => { }}
-                            onReschedule={onReschedule}
                             onOpenNotes={onOpenNotes}
                         />
                     ))}

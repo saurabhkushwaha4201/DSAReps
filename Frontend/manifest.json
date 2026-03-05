@@ -2,26 +2,28 @@
   "manifest_version": 3,
   "name": "DSA Revision Tracker",
   "version": "1.0.0",
-  "description": "Track your DSA revisions from LeetCode and Codeforces.",
+  "description": "Track your DSA revisions from LeetCode, Codeforces, CSES, and GeeksforGeeks.",
 
   "permissions": [
     "storage",
     "identity",
     "activeTab",
     "scripting",
-    "notifications",
     "alarms"
   ],
 
   "host_permissions": [
     "*://leetcode.com/*",
     "*://codeforces.com/*",
+    "*://cses.fi/*",
+    "*://www.geeksforgeeks.org/*",
+    "*://practice.geeksforgeeks.org/*",
     "http://localhost:5175/*",
     "http://localhost:5000/*"
   ],
 
   "background": {
-    "service_worker": "src/background/serviceWorker.js",
+    "service_worker": "serviceWorker.js",
     "type": "module"
   },
 
@@ -30,7 +32,7 @@
   },
 
   "action": {
-    "default_popup": "src/popup/popup.html",
+    "default_popup": "popup.html",
     "default_title": "Save for Revision",
     "default_icon": {
         "128": "icons/icon128.png"
@@ -42,14 +44,18 @@
       "matches": [
         "*://leetcode.com/problems/*",
         "*://codeforces.com/problemset/problem/*",
-        "*://codeforces.com/contest/*/problem/*"
+        "*://codeforces.com/contest/*/problem/*",
+        "*://codeforces.com/gym/*/problem/*",
+        "*://cses.fi/problemset/task/*",
+        "*://www.geeksforgeeks.org/problems/*",
+        "*://practice.geeksforgeeks.org/problems/*"
       ],
-      "js": ["src/content/contentScript.js"]
+      "js": ["contentScript.js"]
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["src/background/auth-success.html", "src/background/auth-success.js"],
+      "resources": ["authSuccess.html", "authSuccess.js"],
       "matches": ["<all_urls>"]
     }
   ],

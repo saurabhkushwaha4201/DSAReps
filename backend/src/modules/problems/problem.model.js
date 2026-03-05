@@ -11,7 +11,7 @@ const problemSchema = new mongoose.Schema(
 
     platform: {
       type: String,
-      enum: ['leetcode', 'codeforces'],
+      enum: ['leetcode', 'codeforces', 'cses', 'gfg', 'other'],
       required: true,
       index: true,
     },
@@ -60,24 +60,6 @@ const problemSchema = new mongoose.Schema(
       index: true,
     },
 
-    // SRS Fields (The Algorithm State)
-    srsInterval: {
-      type: Number, // Current gap in days
-      default: 0,
-    },
-
-    srsEaseFactor: {
-      type: Number,
-      default: 2.5,
-    },
-
-    nextReviewDate: {
-      type: Date,
-      required: true,
-      index: true,
-      default: Date.now,
-    },
-
     isDeleted: {
       type: Boolean,
       default: false,
@@ -85,6 +67,57 @@ const problemSchema = new mongoose.Schema(
     },
 
     archivedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // ── Anti-Avalanche SRS Fields ──────────────────────────
+    stabilityScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 30,
+    },
+
+    lastAttemptRating: {
+      type: String,
+      enum: ['FORGOT', 'SLOW', 'CLEAN'],
+      default: null,
+    },
+
+    nextReviewType: {
+      type: String,
+      enum: ['MICRO_RECALL', 'PATTERN_REBUILD', 'FULL_RECODE'],
+      default: 'FULL_RECODE',
+    },
+
+    currentIntervalDays: {
+      type: Number,
+      default: 0,
+    },
+
+    nextReviewDate: {
+      type: Date,
+      default: null,
+    },
+
+    revisedCount: {
+      type: Number,
+      default: 0,
+    },
+
+    lastRevised: {
+      type: Date,
+      default: null,
+    },
+
+    // ── Manual Override (Dashboard Reschedule) ─────────────
+    isManualOverride: {
+      type: Boolean,
+      default: false,
+    },
+
+    manualOverrideDate: {
       type: Date,
       default: null,
     },
@@ -108,9 +141,19 @@ problemSchema.index(
 );
 
 /**
- * Efficient queries for reminders & dashboards
+ * Efficient queries for dashboards
  */
-problemSchema.index({ userId: 1, nextReviewDate: 1 });
 problemSchema.index({ userId: 1, status: 1 });
+
+/**
+ * Manual override triage index
+ */
+problemSchema.index({ userId: 1, isManualOverride: 1, manualOverrideDate: 1 });
+
+/**
+ * Anti-Avalanche triage query index
+ * Supports: find due problems, sort by lowest stability
+ */
+problemSchema.index({ userId: 1, isDeleted: 1, status: 1, nextReviewDate: 1, stabilityScore: 1 });
 
 module.exports = mongoose.model('Problem', problemSchema);

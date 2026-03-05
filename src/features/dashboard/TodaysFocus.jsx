@@ -31,7 +31,7 @@ const TodaysFocus = ({ revisions = [], upcoming = [] }) => {
                             <div key={problem._id || idx} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50 hover:border-indigo-100 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className={`w-2 h-2 rounded-full ${problem.difficulty === 'Hard' ? 'bg-red-500' : problem.difficulty === 'Medium' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                                    <span className="font-medium text-slate-700 truncate max-w-[150px] md:max-w-[300px]">{problem.title}</span>
+                                    <span className="font-medium text-slate-700 truncate max-w-37.5 md:max-w-75">{problem.title}</span>
                                 </div>
                                 <Badge variant="outline" className="text-xs">Due</Badge>
                             </div>
@@ -60,7 +60,7 @@ const TodaysFocus = ({ revisions = [], upcoming = [] }) => {
                                         <div key={problem._id || idx} className="flex items-center justify-between p-2 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-slate-400">
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-1.5 h-1.5 rounded-full ${problem.difficulty === 'Hard' ? 'bg-red-300' : problem.difficulty === 'Medium' ? 'bg-amber-300' : 'bg-emerald-300'}`} />
-                                                <span className="text-sm font-medium truncate max-w-[200px]">{problem.title}</span>
+                                                <span className="text-sm font-medium truncate max-w-50">{problem.title}</span>
                                             </div>
                                             <span className="text-[10px] border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded">Upcoming</span>
                                         </div>

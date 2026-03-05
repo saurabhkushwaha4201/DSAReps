@@ -6,6 +6,7 @@ const STATES = {
     AUTH: 'state-auth',
     UNSUPPORTED: 'state-unsupported',
     FORM: 'state-form',
+    MANUAL: 'state-manual',
     SUCCESS: 'state-success',
     ERROR: 'state-error'
 };
@@ -131,7 +132,7 @@ function renderForm(problem) {
 
     if (btnSave) {
         btnSave.disabled = false;
-        btnSave.innerText = 'Save to Revision Queue';
+        btnSave.innerText = 'Track Problem';
     }
     if (msgDiv) {
         msgDiv.classList.add('hidden');
@@ -231,7 +232,7 @@ document.getElementById('save-form').addEventListener('submit', async (e) => {
         if (response && response.isDuplicate) {
             if (btnSave) btnSave.innerText = 'Already Saved';
             if (msgDiv) {
-                msgDiv.innerText = `Refreshed entry! Next review in ${response.nextRevisionInDays || 1} days`;
+                msgDiv.innerText = `Problem already tracked!`;
                 msgDiv.classList.remove('hidden');
             }
             // Transition to success briefly or stay? User logic said "LOCK the UI".
@@ -248,6 +249,97 @@ document.getElementById('save-form').addEventListener('submit', async (e) => {
 
 document.getElementById('btn-retry').addEventListener('click', () => init());
 document.getElementById('btn-close').addEventListener('click', () => window.close());
+
+// 4. Manual Track
+const btnManualTrack = document.getElementById('btn-manual-track');
+if (btnManualTrack) {
+    btnManualTrack.addEventListener('click', () => {
+        showState(STATES.MANUAL);
+    });
+}
+
+const btnBackManual = document.getElementById('btn-back-manual');
+if (btnBackManual) {
+    btnBackManual.addEventListener('click', () => {
+        showState(STATES.UNSUPPORTED);
+    });
+}
+
+// Auto-detect platform from URL in manual form
+const manualUrlInput = document.getElementById('manual-url');
+const manualPlatformSelect = document.getElementById('manual-platform');
+if (manualUrlInput && manualPlatformSelect) {
+    const PLATFORM_HOSTS = [
+        { host: 'leetcode.com', value: 'leetcode' },
+        { host: 'codeforces.com', value: 'codeforces' },
+        { host: 'cses.fi', value: 'cses' },
+        { host: 'geeksforgeeks.org', value: 'gfg' },
+    ];
+
+    manualUrlInput.addEventListener('input', () => {
+        try {
+            const { hostname } = new URL(manualUrlInput.value);
+            const match = PLATFORM_HOSTS.find(p => hostname.includes(p.host));
+            if (match) manualPlatformSelect.value = match.value;
+            else manualPlatformSelect.value = 'other';
+        } catch { /* invalid URL yet */ }
+    });
+}
+
+const manualForm = document.getElementById('manual-form');
+if (manualForm) {
+    manualForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const url = document.getElementById('manual-url').value.trim();
+        const title = document.getElementById('manual-title').value.trim();
+        const platform = document.getElementById('manual-platform').value;
+        const difficulty = document.getElementById('manual-difficulty').value;
+        const notes = document.getElementById('manual-notes').value.trim();
+
+        if (!url || !title) return;
+
+        const btnSave = document.getElementById('btn-manual-save');
+        if (btnSave) {
+            btnSave.disabled = true;
+            btnSave.innerText = 'Saving...';
+        }
+
+        const payload = {
+            platform,
+            title,
+            url,
+            difficulty,
+            attemptType: 'fresh',
+            notes,
+            timeSpent: 0,
+        };
+
+        chrome.runtime.sendMessage({ type: 'SAVE_PROBLEM', data: payload }, (response) => {
+            if (chrome.runtime.lastError) {
+                showError('Extension error: ' + chrome.runtime.lastError.message);
+                return;
+            }
+
+            if (response && response.error === 'AUTH_REQUIRED') {
+                showError('Session expired. Please log in again.');
+                return;
+            }
+
+            if (response && response.isDuplicate) {
+                if (btnSave) btnSave.innerText = 'Already Tracked';
+                setTimeout(() => showState(STATES.SUCCESS), 800);
+                return;
+            }
+
+            if (response && response.success) {
+                showState(STATES.SUCCESS);
+            } else {
+                showError(response ? response.error : 'Failed to save');
+            }
+        });
+    });
+}
 
 // Auth Polling
 function pollAuthStatus() {

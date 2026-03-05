@@ -6,213 +6,65 @@ const API_BASE_URL = "http://localhost:5000";
 const DASHBOARD_URL = "http://localhost:5175";
 
 /* ===============================
-   INITIALIZATION & ALARMS
+   BADGE MANAGEMENT
 ================================ */
 
-// Setup alarms on installation
-chrome.runtime.onInstalled.addListener(() => {
-  console.log("[BG] Extension Installed/Updated");
-
-  // Create alarm that fires every 30 minutes for evening check
-  chrome.alarms.create("EVENING_CHECK", {
-    periodInMinutes: 30
-  });
-
-  console.log("[BG] Evening check alarm created (30 min interval)");
-});
-
-/* ===============================
-   TRIGGER 1: MORNING - On Startup
-================================ */
-chrome.runtime.onStartup.addListener(async () => {
-  console.log("[BG] 🌅 Browser Startup Detected");
-
+async function updateBadge(count) {
   try {
-    // Check if user is authenticated
+    if (count <= 0) {
+      // Clear badge completely — no text, no color
+      await chrome.action.setBadgeText({ text: "" });
+      return;
+    }
+    const color = count >= 3 ? "#EF4444" : "#F59E0B";
+    await chrome.action.setBadgeText({ text: String(count) });
+    await chrome.action.setBadgeBackgroundColor({ color });
+  } catch (err) {
+    console.warn("[BG] Badge update failed:", err);
+  }
+}
+
+async function fetchAndUpdateBadge() {
+  try {
     const isAuth = await AuthService.isAuthenticated();
     if (!isAuth) {
-      console.log("[BG] User not authenticated. Skipping morning notification.");
-      return;
+      await updateBadge(0);
+      return null;
     }
 
-    // Check throttling
-    const canSend = await checkThrottling();
-    if (!canSend) {
-      console.log("[BG] Morning notification throttled (< 6 hours since last)");
-      return;
-    }
-
-    // Fetch due count (mock for now, replace with real API call)
-    const dueCount = await fetchDueCountMock();
-
-    if (dueCount > 0) {
-      await sendNotification(
-        "morning-briefing",
-        "☀️ Ready to Code?",
-        `You have ${dueCount} problem${dueCount > 1 ? 's' : ''} due today. Let's crush them!`
-      );
-
-      await updateThrottleTimestamp();
-      console.log(`[BG] ✅ Morning notification sent (${dueCount} problems due)`);
-    } else {
-      console.log("[BG] No problems due, skipping notification");
-    }
-
-  } catch (err) {
-    console.error("[BG] Morning trigger error:", err);
-  }
-});
-
-/* ===============================
-   TRIGGER 2: EVENING - 7 PM Check
-================================ */
-chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === "EVENING_CHECK") {
-    console.log("[BG] 🔔 Alarm fired - checking if evening");
-
-    try {
-      const now = new Date();
-      const currentHour = now.getHours();
-
-      // Only proceed if it's 7 PM or later
-      if (currentHour < 19) {
-        console.log(`[BG] Too early (${currentHour}:00), skipping evening check`);
-        return;
-      }
-
-      // Check auth
-      const isAuth = await AuthService.isAuthenticated();
-      if (!isAuth) {
-        console.log("[BG] User not authenticated. Skipping evening notification.");
-        return;
-      }
-
-      // Check throttling
-      const canSend = await checkThrottling();
-      if (!canSend) {
-        console.log("[BG] Evening notification throttled (< 6 hours since last)");
-        return;
-      }
-
-      // Send streak protection reminder
-      await sendNotification(
-        "evening-streak",
-        "🌙 Streak Protection",
-        "Don't lose your streak! Take 10 minutes to review today."
-      );
-
-      await updateThrottleTimestamp();
-      console.log("[BG] ✅ Evening notification sent");
-
-    } catch (err) {
-      console.error("[BG] Evening trigger error:", err);
-    }
-  }
-});
-
-/* ===============================
-   NOTIFICATION CLICK HANDLER
-================================ */
-chrome.notifications.onClicked.addListener((notificationId) => {
-  console.log(`[BG] Notification clicked: ${notificationId}`);
-
-  // Open dashboard
-  chrome.tabs.create({ url: DASHBOARD_URL });
-
-  // Clear the notification
-  chrome.notifications.clear(notificationId);
-});
-
-/* ===============================
-   THROTTLING LOGIC (6 Hour Rule)
-================================ */
-
-/**
- * Check if we can send a notification based on throttling rules
- * Returns true if >= 6 hours have passed since last notification
- */
-async function checkThrottling() {
-  const data = await chrome.storage.local.get(['lastNotificationTimestamp']);
-  const lastTimestamp = data.lastNotificationTimestamp || 0;
-  const now = Date.now();
-
-  const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
-  const timeSinceLast = now - lastTimestamp;
-
-  if (timeSinceLast >= SIX_HOURS_MS) {
-    return true; // Can send
-  }
-
-  console.log(`[BG] Throttled: ${Math.round(timeSinceLast / 1000 / 60)} min since last (need 360 min)`);
-  return false; // Throttled
-}
-
-/**
- * Update the last notification timestamp
- */
-async function updateThrottleTimestamp() {
-  await chrome.storage.local.set({
-    lastNotificationTimestamp: Date.now()
-  });
-}
-
-/* ===============================
-   NOTIFICATION HELPER
-================================ */
-
-/**
- * Send a Chrome notification
- */
-async function sendNotification(id, title, message) {
-  return new Promise((resolve, reject) => {
-    chrome.notifications.create(id, {
-      type: "basic",
-      iconUrl: "icons/icon128.png",
-      title: title,
-      message: message,
-      priority: 2,
-      requireInteraction: false
-    }, (notificationId) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-      } else {
-        resolve(notificationId);
-      }
-    });
-  });
-}
-
-/* ===============================
-   DATA FETCHING
-================================ */
-
-/**
- * Fetch due count from API (MOCK for now)
- * TODO: Replace with real API call to /api/problems/today
- */
-async function fetchDueCountMock() {
-  // Simulate network delay
-  await new Promise(r => setTimeout(r, 300));
-
-  // Mock response - returns count of problems due
-  return 3; // Change this to test different scenarios
-}
-
-/**
- * Fetch due count from real API (Uncomment when ready)
- */
-async function fetchDueCount() {
-  try {
     const data = await apiFetch("/api/problems/today");
-    return Array.isArray(data) ? data.length : 0;
+    const problems = data?.problems || [];
+    await updateBadge(problems.length);
+
+    // Persist to chrome.storage.local — all content scripts react via onChanged
+    await chrome.storage.local.set({
+      tasksState: { problems, count: problems.length, lastUpdated: Date.now() },
+    });
+
+    return problems;
   } catch (err) {
-    console.error("[BG] Failed to fetch due count:", err);
-    return 0; // Fail silently
+    console.warn("[BG] Badge fetch failed:", err);
+    return null;
   }
 }
 
 /* ===============================
-   EXISTING MESSAGE LISTENERS
+   ALARMS — Periodic badge refresh
+================================ */
+
+chrome.alarms.create("refreshTasks", { periodInMinutes: 120 });
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "refreshTasks") {
+    fetchAndUpdateBadge();
+  }
+});
+
+// Also refresh on service worker startup
+fetchAndUpdateBadge();
+
+/* ===============================
+   MESSAGE LISTENERS
 ================================ */
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -222,7 +74,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     AuthService.isAuthenticated().then((isAuthenticated) => {
       sendResponse({ isAuthenticated });
     });
-    return true; // Keep channel open for async response
+    return true;
   }
 
   // Handle login
@@ -244,6 +96,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           if (token) {
             await AuthService.setAuth(token);
+            // Refresh badge after login
+            fetchAndUpdateBadge();
             sendResponse({ success: true });
           } else {
             sendResponse({ success: false });
@@ -259,7 +113,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // Handle logout
   if (message.type === "AUTH_LOGOUT") {
-    AuthService.clearAuth().then(() => {
+    AuthService.clearAuth().then(async () => {
+      await updateBadge(0);
       sendResponse({ success: true });
     });
     return true;
@@ -271,10 +126,48 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       method: "POST",
       body: JSON.stringify(message.data),
     })
-      .then((res) => sendResponse(res))
+      .then((res) => {
+        // Refresh badge after saving a new problem
+        fetchAndUpdateBadge();
+        sendResponse(res);
+      })
       .catch((err) => {
         console.error("[BG] Save problem error:", err);
         sendResponse({ error: err.message || "SAVE_FAILED" });
+      });
+    return true;
+  }
+
+  // ── NEW: Fetch daily tasks (max 3) for the capsule ────────
+  if (message.type === "GET_DAILY_TASKS") {
+    apiFetch("/api/problems/today")
+      .then(async (data) => {
+        const problems = data?.problems || [];
+        await updateBadge(problems.length);
+        sendResponse({ problems, count: problems.length });
+      })
+      .catch((err) => {
+        console.error("[BG] Fetch daily tasks error:", err);
+        sendResponse({ problems: [], count: 0, error: err.message });
+      });
+    return true;
+  }
+
+  // ── NEW: Rate a problem (revision with multiplier logic) ──
+  if (message.type === "RATE_PROBLEM") {
+    const { problemId, rating } = message.data;
+    apiFetch(`/api/problems/${problemId}/revise`, {
+      method: "POST",
+      body: JSON.stringify({ rating, device: "Extension" }),
+    })
+      .then(async (res) => {
+        // Refresh badge + write to storage (all tabs react via onChanged)
+        await fetchAndUpdateBadge();
+        sendResponse(res);
+      })
+      .catch((err) => {
+        console.error("[BG] Rate problem error:", err);
+        sendResponse({ error: err.message || "RATE_FAILED" });
       });
     return true;
   }

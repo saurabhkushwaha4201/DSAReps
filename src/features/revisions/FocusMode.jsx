@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getTodayRevisions, reviseProblem } from '../../api/problem.api';
+import { getAllProblems } from '../../api/problem.api';
 import RevisionCard from './RevisionCard';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/Skeleton';
@@ -21,10 +21,9 @@ const FocusMode = () => {
 
     const fetchRevisions = async () => {
         try {
-            const data = await getTodayRevisions();
-            // Sort: Overdue first
-            const sorted = (data || []).sort((a, b) => new Date(a.nextReviewDate) - new Date(b.nextReviewDate));
-            setRevisions(sorted);
+            const data = await getAllProblems();
+            const active = (data || []).filter(p => (p.status || 'active') !== 'archived');
+            setRevisions(active);
         } catch (error) {
             console.error(error);
             toast.error("Failed to load revisions");
@@ -35,18 +34,14 @@ const FocusMode = () => {
 
     const handleRevise = async (id) => {
         try {
-            // Find the problem before removing it
             const problem = revisions.find(p => (p._id || p.id) === id);
 
-            await reviseProblem(id, true); // Assume comfortable for "Quick Mark"
             toast.success("Problem revised!");
 
-            // Track completed problem for session summary
             if (problem) {
                 setCompletedProblems(prev => [...prev, { ...problem, rating: 'GOOD' }]);
             }
 
-            // Remove from list locally for immediate feedback
             setRevisions(prev => prev.filter(p => (p._id || p.id) !== id));
         } catch (error) {
             console.error(error);
@@ -93,7 +88,7 @@ const FocusMode = () => {
 
             {/* Progress Indicator */}
             {completedProblems.length > 0 && (
-                <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                <div className="p-4 bg-linear-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center">
@@ -135,7 +130,7 @@ const FocusMode = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     className="text-center py-12"
                 >
-                    <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-full flex items-center justify-center">
+                    <div className="w-20 h-20 mx-auto mb-4 bg-linear-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-full flex items-center justify-center">
                         <Trophy className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
@@ -146,7 +141,7 @@ const FocusMode = () => {
                     </p>
                     <button
                         onClick={handleFinishSession}
-                        className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
+                        className="px-6 py-3 bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
                     >
                         🏆 View Session Summary
                     </button>

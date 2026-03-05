@@ -1,10 +1,11 @@
 import api from "./axios";
 
 /**
- * Fetch today's problems scheduled for revision
+ * Save a new problem (manual add from dashboard)
+ * @param {Object} data - { platform, title, url, difficulty, attemptType, notes? }
  */
-export const getTodayRevisions = async () => {
-  const res = await api.get("/api/problems/today");
+export const saveProblem = async (data) => {
+  const res = await api.post('/api/problems', data);
   return res.data;
 };
 
@@ -14,18 +15,6 @@ export const getTodayRevisions = async () => {
 export const getAllProblems = async (filters = {}) => {
   const res = await api.get("/api/problems", {
     params: filters,
-  });
-  return res.data;
-};
-
-/**
- * Submit revision feedback for a problem
- * @param {string} id - problem id
- * @param {boolean} quality - true = comfortable, false = hard
- */
-export const reviseProblem = async (id, quality) => {
-  const res = await api.post(`/api/problems/${id}/revise`, {
-    solvedComfortably: quality,
   });
   return res.data;
 };
@@ -47,18 +36,6 @@ export const unarchiveProblem = async (id) => {
 };
 
 /**
- * Reschedule a problem's next review date without affecting SRS
- * @param {string} id 
- * @param {string|Date} nextDate - ISO string or Date object
- */
-export const rescheduleProblem = async (id, nextDate) => {
-  const res = await api.patch(`/api/problems/${id}/reschedule`, {
-    nextReviewDate: nextDate
-  });
-  return res.data;
-};
-
-/**
  * Update problem notes
  * @param {string} id - problem id
  * @param {string} notes - Markdown notes content
@@ -73,5 +50,61 @@ export const updateNotes = async (id, notes) => {
  */
 export const exportUserData = async () => {
   const res = await api.get('/api/user/export');
+  return res.data;
+};
+
+/**
+ * Fetch today's triage tasks (max 3, Anti-Avalanche)
+ */
+export const getTodayTasks = async () => {
+  const res = await api.get('/api/problems/today');
+  return res.data;
+};
+
+/**
+ * Submit a revision rating for a problem
+ * @param {string} id - problem id
+ * @param {string} rating - FORGOT | SLOW | CLEAN
+ */
+export const reviseProblem = async (id, rating) => {
+  const res = await api.post(`/api/problems/${id}/revise`, {
+    rating,
+    device: 'Web',
+  });
+  return res.data;
+};
+
+/**
+ * Fetch dashboard stats (heatmap, weak clusters, streak)
+ */
+export const getStats = async () => {
+  const res = await api.get('/api/problems/stats');
+  return res.data;
+};
+
+/**
+ * Reschedule a problem to a specific date (manual override)
+ * @param {string} id - problem id
+ * @param {string} date - ISO date string (YYYY-MM-DD)
+ */
+export const rescheduleProblem = async (id, date) => {
+  const res = await api.put(`/api/problems/${id}/reschedule`, { date });
+  return res.data;
+};
+
+/**
+ * Fetch user settings (revision intervals + daily cap)
+ */
+export const getUserSettings = async () => {
+  const res = await api.get('/api/user/settings');
+  return res.data;
+};
+
+/**
+ * Update user settings
+ * @param {Object} settings - { revisionIntervals?: { hard, medium, easy }, dailyGoal?: number }
+ */
+export const updateUserSettings = async (settings) => {
+  const res = await api.put('/api/user/settings', settings);
   return res.data;
 };
