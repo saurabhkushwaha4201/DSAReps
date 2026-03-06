@@ -19,5 +19,6 @@ router.put('/:id/reschedule', problemController.rescheduleProblem);
 router.patch('/:id/notes', problemController.updateProblemNotes);
 router.patch('/:id/archive', problemController.archiveProblem);
 router.patch('/:id/unarchive', problemController.unarchiveProblem);
+router.delete('/:id', problemController.deleteProblem);
 
 module.exports = router;

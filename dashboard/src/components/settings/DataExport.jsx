@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Button } from '../ui/Button';
 import { Download, Database, Loader2 } from 'lucide-react';
 import { getAllProblems } from '../../api/problem.api';
 import toast from 'react-hot-toast';
@@ -56,29 +55,28 @@ const DataExport = () => {
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl border border-slate-200 space-y-4">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                    <Database className="w-5 h-5 text-slate-500" />
+                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                    <Database className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                 </div>
                 <div className="flex-1">
-                    <h3 className="font-semibold text-slate-900">Data Sovereignty</h3>
-                    <p className="text-sm text-slate-500 mt-1">
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Data Sovereignty</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                         Your data belongs to you. Export a full copy of your problems, progress history, and notes.
                     </p>
                 </div>
             </div>
 
             <div className="flex justify-end pt-2">
-                <Button
-                    variant="outline"
+                <button
                     onClick={handleExport}
                     disabled={loading}
-                    className="gap-2"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm font-medium hover:bg-indigo-600/10 hover:border-indigo-500 hover:text-indigo-400 disabled:opacity-50 transition-colors"
                 >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                     {loading ? 'Exporting...' : 'Export My Data (JSON)'}
-                </Button>
+                </button>
             </div>
         </div>
     );

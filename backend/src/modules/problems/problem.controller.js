@@ -1,26 +1,80 @@
+const mongoose = require('mongoose');
 const Problem = require('./problem.model');
 const RevisionLog = require('../revisions/revision.model');
 const User = require('../users/user.model');
 const { getDailyTriage } = require('./triage.service');
 
-// ── Constants ──────────────────────────────────────────────
 const DEFAULT_INTERVALS = { hard: 1, medium: 3, easy: 5 };
-const MAX_INTERVAL_DAYS = 90; // 90-day ceiling
+const MAX_INTERVAL_DAYS = 90;
 
-// ── Helpers ────────────────────────────────────────────────
 const clampStability = (v) => Math.max(0, Math.min(100, v));
 
-/**
- * Dynamically compute next review type from stability score.
- * Replaces the static lookup from RATING_RULES.
- */
 const computeReviewType = (stabilityScore) => {
   if (stabilityScore >= 70) return 'MICRO_RECALL';
   if (stabilityScore >= 40) return 'PATTERN_REBUILD';
   return 'FULL_RECODE';
 };
 
-// ── Multiplier Logic ───────────────────────────────────────
+const getStartOfDayInTimezone = (date, timezone) => {
+  const dateParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const year = Number(dateParts.find((part) => part.type === 'year')?.value || '0');
+  const month = Number(dateParts.find((part) => part.type === 'month')?.value || '0');
+  const day = Number(dateParts.find((part) => part.type === 'day')?.value || '0');
+  const utcMidnight = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+  const zonedParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).formatToParts(utcMidnight);
+  const hour = Number(zonedParts.find((part) => part.type === 'hour')?.value || '0');
+  const minute = Number(zonedParts.find((part) => part.type === 'minute')?.value || '0');
+  const second = Number(zonedParts.find((part) => part.type === 'second')?.value || '0');
+
+  return new Date(Date.UTC(year, month - 1, day, -hour, -minute, -second));
+};
+
+const updateUserStreak = async (userId, timezone = 'UTC') => {
+  const startOfToday = getStartOfDayInTimezone(new Date(), timezone);
+  const completedToday = await RevisionLog.countDocuments({
+    userId: new mongoose.Types.ObjectId(userId),
+    createdAt: { $gte: startOfToday },
+  });
+
+  const user = await User.findById(userId).select('dailyGoal streak');
+  const dailyGoal = user?.dailyGoal || 3;
+  if (completedToday !== dailyGoal) {
+    return;
+  }
+
+  const streak = user?.streak || { current: 0, longest: 0, lastActiveDate: null };
+  const lastActive = streak.lastActiveDate
+    ? getStartOfDayInTimezone(new Date(streak.lastActiveDate), timezone)
+    : null;
+  const yesterday = new Date(startOfToday);
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+
+  if (lastActive && lastActive.getTime() === startOfToday.getTime()) {
+    return;
+  }
+
+  if (lastActive && lastActive.getTime() === yesterday.getTime()) {
+    streak.current += 1;
+  } else {
+    streak.current = 1;
+  }
+
+  streak.longest = Math.max(streak.longest || 0, streak.current);
+  streak.lastActiveDate = startOfToday;
+  await User.updateOne({ _id: userId }, { $set: { streak } });
+};
+
 const RATING_RULES = {
   CLEAN: {
     stabilityDelta: 20,
@@ -36,11 +90,10 @@ const RATING_RULES = {
   },
 };
 
-// GET /api/problems (with pagination)
 const getAllProblems = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 20;
     const skip = (page - 1) * limit;
 
     const query = {
@@ -69,16 +122,14 @@ const getAllProblems = async (req, res) => {
   }
 };
 
-// POST /api/problems
 const saveProblem = async (req, res) => {
   try {
     const { platform, title, url, difficulty, attemptType, notes, timeSpent } = req.body;
     const userId = req.user.id;
-    console.log("REQ BODY", req.body);
+    const timezone = req.body.timezone || req.query.tz || 'UTC';
 
     let problem = await Problem.findOne({ userId, url });
 
-    // Idempotent save
     if (problem) {
       if (problem.isDeleted) {
         problem.isDeleted = false;
@@ -92,7 +143,6 @@ const saveProblem = async (req, res) => {
       });
     }
 
-    // Fetch user's custom intervals (or use defaults)
     const user = await User.findById(userId)
       .select('revisionIntervals')
       .lean();
@@ -108,14 +158,24 @@ const saveProblem = async (req, res) => {
       attemptType,
       notes: notes || '',
       timeSpent: timeSpent || 0,
-      // Anti-Avalanche SRS initialization — uses user's intervals
       stabilityScore: 30,
       nextReviewType: 'FULL_RECODE',
       currentIntervalDays: interval,
-      nextReviewDate: new Date(
-        Date.now() + interval * 24 * 60 * 60 * 1000
-      ),
+      nextReviewDate: new Date(Date.now() + interval * 24 * 60 * 60 * 1000),
     });
+
+    await RevisionLog.create({
+      userId,
+      problemId: problem._id,
+      rating: 'INITIAL',
+      device: req.body.device === 'Extension' ? 'Extension' : 'Web',
+    });
+
+    try {
+      await updateUserStreak(userId, timezone);
+    } catch (streakErr) {
+      console.warn('[STREAK] Initial save streak update failed:', streakErr.message);
+    }
 
     res.status(201).json({
       success: true,
@@ -127,7 +187,6 @@ const saveProblem = async (req, res) => {
   }
 };
 
-// PATCH /api/problems/:id/notes
 const updateProblemNotes = async (req, res) => {
   try {
     const { id } = req.params;
@@ -136,7 +195,7 @@ const updateProblemNotes = async (req, res) => {
 
     const problem = await Problem.findOneAndUpdate(
       { _id: id, userId },
-      { notes: notes },
+      { notes },
       { new: true }
     );
 
@@ -151,7 +210,6 @@ const updateProblemNotes = async (req, res) => {
   }
 };
 
-// PATCH /api/problems/:id/archive
 const archiveProblem = async (req, res) => {
   try {
     const { id } = req.params;
@@ -177,7 +235,6 @@ const archiveProblem = async (req, res) => {
   }
 };
 
-// PATCH /api/problems/:id/unarchive
 const unarchiveProblem = async (req, res) => {
   try {
     const { id } = req.params;
@@ -203,9 +260,6 @@ const unarchiveProblem = async (req, res) => {
   }
 };
 
-// ── GET /api/problems/today ────────────────────────────────
-// Anti-Avalanche triage: respects manual overrides first,
-// then fills remaining slots with algorithmic picks
 const getTodayProblems = async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
@@ -221,15 +275,13 @@ const getTodayProblems = async (req, res) => {
   }
 };
 
-// ── POST /api/problems/:id/revise ──────────────────────────
-// Applies multiplier logic based on user's self-rating
 const reviseProblem = async (req, res) => {
   try {
     const { id } = req.params;
     const { rating, device } = req.body;
     const userId = req.user.id;
+    const timezone = req.body.timezone || req.query.tz || 'UTC';
 
-    // Validate rating
     if (!['FORGOT', 'SLOW', 'CLEAN'].includes(rating)) {
       return res.status(400).json({
         message: 'Invalid rating. Must be FORGOT, SLOW, or CLEAN.',
@@ -256,18 +308,14 @@ const reviseProblem = async (req, res) => {
     } else {
       const currentInterval = problem.currentIntervalDays || 1;
       const baseInterval = currentInterval * rule.intervalMultiplier;
-      // Floor guard: interval must be at least 1 day
       newInterval = Math.max(1, Math.round(baseInterval));
-      // Ceiling guard: cap at 90 days
       newInterval = Math.min(MAX_INTERVAL_DAYS, newInterval);
       newStability = clampStability(
         (problem.stabilityScore || 30) + rule.stabilityDelta
       );
     }
 
-    // Dynamic review type from stability, not static lookup
     const nextReviewType = computeReviewType(newStability);
-
     const nextReviewDate = new Date(
       Date.now() + newInterval * 24 * 60 * 60 * 1000
     );
@@ -279,19 +327,15 @@ const reviseProblem = async (req, res) => {
     problem.nextReviewDate = nextReviewDate;
     problem.revisedCount = (problem.revisedCount || 0) + 1;
     problem.lastRevised = new Date();
-
-    // Reset manual override — algorithm takes control again
     problem.isManualOverride = false;
     problem.manualOverrideDate = null;
 
-    // Auto-master after high stability + many revisions
     if (problem.stabilityScore >= 90 && problem.revisedCount >= 5) {
       problem.status = 'mastered';
     }
 
     await problem.save();
 
-    // Log the revision
     await RevisionLog.create({
       userId,
       problemId: problem._id,
@@ -299,50 +343,9 @@ const reviseProblem = async (req, res) => {
       device: device || 'Web',
     });
 
-    // ── Silent Streak Update ────────────────────────────────
-    // Only increment streak when daily goal is exactly met (threshold crossing)
     try {
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const completedToday = await RevisionLog.countDocuments({
-        userId: require('mongoose').Types.ObjectId(userId),
-        createdAt: { $gte: startOfDay },
-      });
-
-      const user = await User.findById(userId).select('dailyGoal streak');
-      const dailyGoal = user?.dailyGoal || 3;
-
-      if (completedToday === dailyGoal) {
-        const streak = user.streak || { current: 0, longest: 0, lastActiveDate: null };
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const lastActive = streak.lastActiveDate ? new Date(streak.lastActiveDate) : null;
-        if (lastActive) lastActive.setHours(0, 0, 0, 0);
-
-        const diffDays = lastActive
-          ? Math.round((today - lastActive) / (24 * 60 * 60 * 1000))
-          : -1;
-
-        if (diffDays === 0) {
-          // Already counted today — no-op
-        } else if (diffDays === 1) {
-          // Consecutive day — increment
-          streak.current += 1;
-          if (streak.current > streak.longest) streak.longest = streak.current;
-          streak.lastActiveDate = today;
-          await User.updateOne({ _id: userId }, { $set: { streak } });
-        } else {
-          // Gap > 1 day (or first ever) — reset to 1
-          streak.current = 1;
-          if (streak.current > streak.longest) streak.longest = streak.current;
-          streak.lastActiveDate = today;
-          await User.updateOne({ _id: userId }, { $set: { streak } });
-        }
-      }
+      await updateUserStreak(userId, timezone);
     } catch (streakErr) {
-      // Streak failures must never block the revision response
       console.warn('[STREAK] Silent update failed:', streakErr.message);
     }
 
@@ -353,9 +356,6 @@ const reviseProblem = async (req, res) => {
   }
 };
 
-// ── PUT /api/problems/:id/reschedule ────────────────────────
-// Manual override — sets a specific review date for this problem.
-// Does NOT touch stabilityScore or intervals — scheduling priority only.
 const rescheduleProblem = async (req, res) => {
   try {
     const { id } = req.params;
@@ -376,7 +376,6 @@ const rescheduleProblem = async (req, res) => {
       return res.status(400).json({ message: 'Date must be today or in the future.' });
     }
 
-    // Max 90 days out
     const maxDate = new Date(today);
     maxDate.setDate(maxDate.getDate() + 90);
     if (targetDate > maxDate) {
@@ -403,28 +402,36 @@ const rescheduleProblem = async (req, res) => {
   }
 };
 
-// ── GET /api/problems/stats ─────────────────────────────────
-// Returns heatmap data, weak clusters, and streak for dashboard
 const getStats = async (req, res) => {
   try {
     const userId = req.user.id;
+    const timezone = req.query.tz || 'UTC';
 
-    // ── Heatmap: revision counts per day (last 365 days) ────
     const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    oneYearAgo.setDate(oneYearAgo.getDate() - 365);
 
     const heatmap = await RevisionLog.aggregate([
-      { $match: { userId: require('mongoose').Types.ObjectId(userId), createdAt: { $gte: oneYearAgo } } },
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          createdAt: { $gte: oneYearAgo },
+        },
+      },
       {
         $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          _id: {
+            $dateToString: {
+              format: '%Y-%m-%d',
+              date: '$createdAt',
+              timezone,
+            },
+          },
           count: { $sum: 1 },
         },
       },
       { $sort: { _id: 1 } },
     ]);
 
-    // ── Weak clusters: avg stability per tag ────────────────
     const problems = await Problem.find(
       { userId, isDeleted: { $ne: true }, status: { $ne: 'archived' } },
       'difficulty stabilityScore'
@@ -444,7 +451,6 @@ const getStats = async (req, res) => {
       count: data.count,
     }));
 
-    // ── Streak: read persistent streak from user model ─────
     const user = await User.findById(userId).select('streak').lean();
     const streak = user?.streak || { current: 0, longest: 0, lastActiveDate: null };
 
@@ -462,12 +468,31 @@ const getStats = async (req, res) => {
   }
 };
 
+const deleteProblem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const problem = await Problem.findOneAndDelete({ _id: id, userId });
+
+    if (!problem) {
+      return res.status(404).json({ message: 'Problem not found' });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[PROBLEM] Delete error:', err);
+    res.status(500).json({ message: 'Failed to delete problem' });
+  }
+};
+
 module.exports = {
   saveProblem,
   getAllProblems,
   updateProblemNotes,
   archiveProblem,
   unarchiveProblem,
+  deleteProblem,
   getTodayProblems,
   reviseProblem,
   rescheduleProblem,

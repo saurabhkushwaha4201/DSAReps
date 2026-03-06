@@ -127,13 +127,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       body: JSON.stringify(message.data),
     })
       .then((res) => {
-        // Refresh badge after saving a new problem
         fetchAndUpdateBadge();
         sendResponse(res);
       })
       .catch((err) => {
         console.error("[BG] Save problem error:", err);
         sendResponse({ error: err.message || "SAVE_FAILED" });
+      });
+    return true;
+  }
+
+  // Handle problem delete (called when user unsaves via bookmark icon)
+  if (message.type === "REMOVE_PROBLEM") {
+    const { dbId } = message.data;
+    apiFetch(`/api/problems/${dbId}`, { method: "DELETE" })
+      .then((res) => {
+        fetchAndUpdateBadge();
+        sendResponse(res);
+      })
+      .catch((err) => {
+        console.error("[BG] Remove problem error:", err);
+        sendResponse({ error: err.message || "REMOVE_FAILED" });
       });
     return true;
   }

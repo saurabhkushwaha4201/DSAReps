@@ -24,7 +24,7 @@ function detectPlatform(url) {
 }
 
 const DIFFICULTIES = ['easy', 'medium', 'hard'];
-const ATTEMPT_TYPES = ['fresh', 'retry', 'revision'];
+const ATTEMPT_TYPES = ['solved', 'partial', 'watched'];
 
 export default function AddProblemModal({ isOpen, onClose, onAdded }) {
   const [form, setForm] = useState({
@@ -32,7 +32,7 @@ export default function AddProblemModal({ isOpen, onClose, onAdded }) {
     title: '',
     platform: 'leetcode',
     difficulty: 'medium',
-    attemptType: 'fresh',
+    attemptType: 'solved',
     notes: '',
   });
   const [saving, setSaving] = useState(false);
@@ -75,7 +75,7 @@ export default function AddProblemModal({ isOpen, onClose, onAdded }) {
 
       onAdded?.();
       onClose();
-      setForm({ url: '', title: '', platform: 'leetcode', difficulty: 'medium', attemptType: 'fresh', notes: '' });
+      setForm({ url: '', title: '', platform: 'leetcode', difficulty: 'medium', attemptType: 'solved', notes: '' });
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to save problem');
     } finally {

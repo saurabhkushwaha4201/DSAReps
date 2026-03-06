@@ -74,9 +74,23 @@ const SettingsPage = () => {
 
     return (
         <div className="max-w-2xl mx-auto space-y-8">
-            <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Settings</h1>
-                <p className="text-slate-500 dark:text-slate-400">Manage your preferences and data.</p>
+            <div className="flex items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Settings</h1>
+                    <p className="text-slate-500 dark:text-slate-400">Manage your preferences and data.</p>
+                </div>
+                <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold rounded-xl transition-colors shrink-0 text-sm"
+                >
+                    {saving ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                        <Save className="w-4 h-4" />
+                    )}
+                    {saving ? 'Saving...' : 'Save Settings'}
+                </button>
             </div>
 
             {/* ── Revision Intervals ─────────────────────────────── */}
@@ -92,15 +106,15 @@ const SettingsPage = () => {
 
                 <div className="grid grid-cols-3 gap-4">
                     {[
-                        { key: 'hard', label: 'Hard', color: 'text-red-600 dark:text-red-400' },
-                        { key: 'medium', label: 'Medium', color: 'text-amber-600 dark:text-amber-400' },
-                        { key: 'easy', label: 'Easy', color: 'text-emerald-600 dark:text-emerald-400' },
-                    ].map(({ key, label, color }) => (
+                        { key: 'hard',   label: 'Hard',   color: 'text-red-600 dark:text-red-400',         focusRing: 'focus:ring-red-500 focus:border-red-500' },
+                        { key: 'medium', label: 'Medium', color: 'text-amber-600 dark:text-amber-400',     focusRing: 'focus:ring-amber-500 focus:border-amber-500' },
+                        { key: 'easy',   label: 'Easy',   color: 'text-emerald-600 dark:text-emerald-400', focusRing: 'focus:ring-emerald-500 focus:border-emerald-500' },
+                    ].map(({ key, label, color, focusRing }) => (
                         <div key={key}>
                             <label className={`block text-sm font-semibold mb-1.5 ${color}`}>
                                 {label}
                             </label>
-                            <div className="relative">
+                            <div className="flex items-center gap-2">
                                 <input
                                     type="number"
                                     min={1}
@@ -109,11 +123,9 @@ const SettingsPage = () => {
                                     onChange={(e) =>
                                         setIntervals((prev) => ({ ...prev, [key]: e.target.value }))
                                     }
-                                    className="w-full px-3 py-2 pr-12 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                                    className={`w-16 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:border-transparent outline-none ${focusRing}`}
                                 />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-                                    days
-                                </span>
+                                <span className="text-sm text-slate-500 dark:text-slate-400">days</span>
                             </div>
                         </div>
                     ))}
@@ -151,18 +163,6 @@ const SettingsPage = () => {
             </section>
 
             {/* Save Button */}
-            <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold rounded-xl transition-colors"
-            >
-                {saving ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                    <Save className="w-4 h-4" />
-                )}
-                {saving ? 'Saving...' : 'Save Settings'}
-            </button>
 
             {/* ── Data Management ────────────────────────────────── */}
             <section className="space-y-4">

@@ -3,7 +3,7 @@ import ProblemCard from './ProblemCard';
 import AddProblemModal from './AddProblemModal';
 import { NotesDrawer } from '../../components/notes/NotesDrawer';
 import toast from 'react-hot-toast';
-import { getAllProblems, archiveProblem, unarchiveProblem } from '../../api/problem.api';
+import { getAllProblems, archiveProblem, unarchiveProblem, reviseProblem } from '../../api/problem.api';
 import { Loader2, ChevronDown, Plus } from 'lucide-react';
 
 // --- MOCK DATA (Fallback) ---
@@ -26,6 +26,8 @@ export default function ProblemList() {
     const [activeProblem, setActiveProblem] = useState(null);
     // Add Problem modal
     const [showAddModal, setShowAddModal] = useState(false);
+    // Rating picker: { id, title } of problem being rated, or null
+    const [ratingTarget, setRatingTarget] = useState(null);
 
     // Helpers
     const getId = (prob) => prob._id || prob.id;
@@ -113,6 +115,30 @@ export default function ProblemList() {
             console.error(error);
             toast.error("Failed to restore");
         }
+    };
+
+    const handleMarkRevised = (problem) => {
+        setRatingTarget({ id: getId(problem), title: problem.title });
+    };
+
+    const handleRatingSubmit = async (rating) => {
+        if (!ratingTarget) return;
+        const { id } = ratingTarget;
+        setRatingTarget(null);
+        try {
+            await reviseProblem(id, rating);
+            toast.success(`Marked as revised (${rating.toLowerCase()})`)
+        } catch (err) {
+            toast.error('Failed to save revision');
+        }
+    };
+
+    const handleReschedule = (id, date) => {
+        setProblems(prev => prev.map(p =>
+            getId(p) === id
+                ? { ...p, nextReviewDate: date.toISOString(), isManualOverride: true }
+                : p
+        ));
     };
 
     // Update notes in local state when saved in NotesDrawer
@@ -220,8 +246,8 @@ export default function ProblemList() {
                         ))}
                     </div>
                     {/* Row 2: Platform filters */}
-                    <div className="grid grid-cols-3 gap-1.5">
-                        {['LeetCode', 'Codeforces', 'CSES', 'GFG', 'Other'].map((filter) => (
+                    <div className="grid grid-cols-2 gap-1.5">
+                        {['LeetCode', 'Codeforces', 'CSES', 'GFG'].map((filter) => (
                             <button
                                 key={filter}
                                 onClick={() => setActiveFilter(filter)}
@@ -235,7 +261,7 @@ export default function ProblemList() {
 
                 {/* Desktop: Single row */}
                 <div className="hidden md:flex items-center gap-2">
-                    {['All', 'Easy', 'Medium', 'Hard', 'LeetCode', 'Codeforces', 'CSES', 'GFG', 'Other'].map((filter) => (
+                    {['All', 'Easy', 'Medium', 'Hard', 'LeetCode', 'Codeforces', 'CSES', 'GFG'].map((filter) => (
                         <button
                             key={filter}
                             onClick={() => setActiveFilter(filter)}
@@ -255,10 +281,11 @@ export default function ProblemList() {
                             <ProblemCard
                                 key={getId(prob)}
                                 problem={prob}
-                                onMarkRevised={() => {}}
+                                onMarkRevised={handleMarkRevised}
                                 onArchive={handleArchive}
                                 onRestore={handleRestore}
                                 onOpenNotes={handleOpenNotes}
+                                onReschedule={handleReschedule}
                             />
                         ))}
                     </>
@@ -310,6 +337,34 @@ export default function ProblemList() {
                 onClose={() => setShowAddModal(false)}
                 onAdded={() => loadProblems(1)}
             />
+
+            {/* Rating Picker Modal */}
+            {ratingTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setRatingTarget(null)}>
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-6 w-80 mx-4" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1">How did it go?</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 truncate">{ratingTarget.title}</p>
+                        <div className="grid grid-cols-3 gap-2">
+                            <button onClick={() => handleRatingSubmit('CLEAN')} className="flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors">
+                                <span className="text-lg">✅</span>
+                                <span className="text-xs font-semibold">Clean</span>
+                                <span className="text-[10px] text-emerald-600 dark:text-emerald-500">Got it</span>
+                            </button>
+                            <button onClick={() => handleRatingSubmit('SLOW')} className="flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors">
+                                <span className="text-lg">🐢</span>
+                                <span className="text-xs font-semibold">Slow</span>
+                                <span className="text-[10px] text-amber-600 dark:text-amber-500">Struggled</span>
+                            </button>
+                            <button onClick={() => handleRatingSubmit('FORGOT')} className="flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-red-400 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+                                <span className="text-lg">❌</span>
+                                <span className="text-xs font-semibold">Forgot</span>
+                                <span className="text-[10px] text-red-600 dark:text-red-500">Blanked</span>
+                            </button>
+                        </div>
+                        <button onClick={() => setRatingTarget(null)} className="mt-4 w-full text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Cancel</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -394,7 +449,7 @@ function HeadStartSection({ problems, onOpenNotes }) {
                         <ProblemCard
                             key={problem._id || problem.id}
                             problem={problem}
-                            onMarkRevised={() => { }}
+                            onMarkRevised={handleMarkRevised}
                             onArchive={() => { }}
                             onRestore={() => { }}
                             onOpenNotes={onOpenNotes}

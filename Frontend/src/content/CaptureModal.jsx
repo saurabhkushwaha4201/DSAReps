@@ -165,14 +165,16 @@ export default function CaptureModal({ problemDetails, onClose }) {
         chrome.runtime.sendMessage(
           {
             type: 'SAVE_PROBLEM',
-            data: {
-              platform: problemDetails.platform,
-              title: problemDetails.problemTitle,
-              url: problemDetails.url,
-              difficulty,
-              attemptType: 'solved',
-              notes: coreTrick ? `**Core Trick:** ${coreTrick}` : '',
-            },
+              data: {
+                platform: problemDetails.platform,
+                title: problemDetails.problemTitle,
+                url: problemDetails.url,
+                difficulty,
+                attemptType: 'solved',
+                notes: coreTrick ? `**Core Trick:** ${coreTrick}` : '',
+                device: 'Extension',
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              },
           },
           (res) => {
             if (chrome.runtime.lastError) {
@@ -186,20 +188,19 @@ export default function CaptureModal({ problemDetails, onClose }) {
 
       if (response?.error) {
         setStatus('error');
-        setTimeout(onClose, 1500);
+        setTimeout(() => onClose(false, null), 1500);
         return;
       }
 
       if (response?.isDuplicate) {
         setStatus('duplicate');
-        setTimeout(onClose, 1200);
+        setTimeout(() => onClose(true, response.problem?._id || null), 1200);
         return;
       }
 
       setStatus('success');
-      // Refresh capsule task count
       chrome.runtime.sendMessage({ type: 'GET_DAILY_TASKS' });
-      setTimeout(onClose, 800);
+      setTimeout(() => onClose(true, response.problem?._id || null), 800);
     } catch (err) {
       console.error('[CaptureModal] Save error:', err);
       setStatus('error');
@@ -210,7 +211,7 @@ export default function CaptureModal({ problemDetails, onClose }) {
   return (
     <>
       <style>{STYLES}</style>
-      <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+        <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose(false)}>
         <div className="modal">
           {status === 'saving' && (
             <div className="status-msg">Saving...</div>
@@ -255,12 +256,12 @@ export default function CaptureModal({ problemDetails, onClose }) {
                 value={coreTrick}
                 onChange={(e) => setCoreTrick(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Escape') onClose();
+                  if (e.key === 'Escape') onClose(false);
                 }}
                 autoFocus
               />
 
-              <button className="cancel-btn" onClick={onClose}>
+              <button className="cancel-btn" onClick={() => onClose(false)}>
                 Cancel (Esc)
               </button>
             </>
