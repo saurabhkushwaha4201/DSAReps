@@ -20,23 +20,22 @@ export const PLATFORM_CONFIGS = {
     isProblemPage: (url) => /\/problems\//.test(url),
     titleSelector: [
       'div[data-cy="question-title"]',
-      'a.mr-2.text-lg.font-medium.text-label-1',
-      'div.text-title-large a',
-      '[class*="text-title-large"]',
-      'div.flex-1 > div > a[href*="/problems/"]',
+      'div.text-title-large', 
+      'h4.text-title-large',
     ],
-    injectPosition: 'afterend',
+    injectPosition: 'beforeend', // LC titles usually have space inside the flex container
     titleCleanup: '- LeetCode',
     capsuleEnabled: true,
     capsuleOffset: { bottom: 24, right: 24 },
-    slugIndex: 2, // /problems/<slug>/...
+    slugIndex: 2,
   },
 
   cses: {
     platform: 'cses',
     host: 'cses.fi',
     isProblemPage: (url) => /\/problemset\/task\/\d+/.test(url),
-    titleSelector: 'div.title-block h1',
+    // Image 2 ke hisaab se: Title 'h1' ke andar hota hai jo 'title-block' mein hai
+    titleSelector: 'div.title-block h1', 
     injectPosition: 'afterend',
     titleCleanup: ' - CSES',
     capsuleEnabled: true,
@@ -45,12 +44,21 @@ export const PLATFORM_CONFIGS = {
   },
 
   codeforces: {
-    platform: 'codeforces',
-    host: 'codeforces.com',
-    isProblemPage: (url) => /\/(problemset|contest|gym)\/.*\/problem\//.test(url),
-    titleSelector: '.problem-statement .header .title',
-    injectPosition: 'beforeend',
-    titleCleanup: ' - Codeforces',
+    platform: "codeforces",
+    host: "codeforces.com",
+    isProblemPage: (url) =>
+      /\/(problemset\/problem|contest\/\d+\/problem|gym\/\d+\/problem)\//.test(
+        url,
+      ),
+    titleSelector: [
+      ".problem-statement .header .title",
+      ".problem-statement-title",
+      'div[class*="title"] h2',
+      'h2[class*="problem-title"]',
+      ".header h2",
+    ],
+    injectPosition: "beforeend",
+    titleCleanup: " - Codeforces",
     capsuleEnabled: true,
     capsuleOffset: { bottom: 20, right: 20 },
     slugIndex: null,
@@ -60,9 +68,14 @@ export const PLATFORM_CONFIGS = {
     platform: 'gfg',
     host: 'geeksforgeeks.org',
     isProblemPage: (url) => /\/problems\//.test(url),
-    titleSelector: 'div.problems_header_content__title__L2cB2 h3',
+    // Image 1 ke hisaab se: Title 'Smallest Subset...' h3 ya div mein hai
+    titleSelector: [
+      'div[class*="title"] h3', 
+      '.problems_header_content__title__L2cB2 h3',
+      '.problems_header_content__title h3'
+    ],
     injectPosition: 'afterend',
-    titleCleanup: /\s*\|.*$/, // " | GeeksforGeeks" or similar
+    titleCleanup: / - GeeksforGeeks|GeeksforGeeks$/,
     capsuleEnabled: true,
     capsuleOffset: { bottom: 20, right: 20 },
     slugIndex: null,
@@ -92,8 +105,8 @@ export function detectPlatformFromUrl(url) {
   try {
     const { hostname, href } = new URL(url);
     const config = detectPlatform(hostname, href);
-    return config ? config.platform : 'other';
+    return config ? config.platform : "other";
   } catch {
-    return 'other';
+    return "other";
   }
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getAllProblems } from '../../api/problem.api';
+import { getTodayTasks, reviseProblem } from '../../api/problem.api';
 import RevisionCard from './RevisionCard';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/Skeleton';
@@ -21,9 +21,9 @@ const FocusMode = () => {
 
     const fetchRevisions = async () => {
         try {
-            const data = await getAllProblems();
-            const active = (data || []).filter(p => (p.status || 'active') !== 'archived');
-            setRevisions(active);
+            const data = await getTodayTasks();
+            const problems = Array.isArray(data) ? data : (data?.problems || []);
+            setRevisions(problems);
         } catch (error) {
             console.error(error);
             toast.error("Failed to load revisions");
@@ -32,20 +32,21 @@ const FocusMode = () => {
         }
     };
 
-    const handleRevise = async (id) => {
+    const handleRevise = async (id, rating = 'CLEAN') => {
+        const problem = revisions.find(p => (p._id || p.id) === id);
+        // Optimistically remove from list
+        setRevisions(prev => prev.filter(p => (p._id || p.id) !== id));
         try {
-            const problem = revisions.find(p => (p._id || p.id) === id);
-
-            toast.success("Problem revised!");
-
+            await reviseProblem(id, rating);
+            toast.success("Problem marked as revised!");
             if (problem) {
-                setCompletedProblems(prev => [...prev, { ...problem, rating: 'GOOD' }]);
+                setCompletedProblems(prev => [...prev, { ...problem, rating }]);
             }
-
-            setRevisions(prev => prev.filter(p => (p._id || p.id) !== id));
         } catch (error) {
             console.error(error);
             toast.error("Failed to save revision");
+            // Restore if API failed
+            if (problem) setRevisions(prev => [problem, ...prev]);
         }
     };
 

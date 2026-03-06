@@ -11,6 +11,10 @@ export default function AuthSuccess() {
 
     if (!token) return;
 
+    // Store token in localStorage first (works in dashboard context)
+    localStorage.setItem('token', token);
+    console.log('[AuthSuccess] Token stored in localStorage');
+
     // We use the ID from the URL or fallback to the known ID
     // Note: Ideally dynamically detect, but for local dev this is fine.
     const EXTENSION_ID = 'fglkieknogcojnbgoflfekplnoafnaip';

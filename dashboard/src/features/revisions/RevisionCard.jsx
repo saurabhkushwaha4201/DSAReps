@@ -36,10 +36,13 @@ const RevisionCard = ({ problem, onRevise }) => {
                                     {problem.difficulty || 'Review'}
                                 </Badge>
                                 <span className="text-sm text-slate-400 flex items-center gap-1">
-                                    <Clock className="w-3 h-3" /> Last reviewed: {new Date(problem.lastRevised).toLocaleDateString()}
+                                    <Clock className="w-3 h-3" />
+                                    {problem.lastRevised && new Date(problem.lastRevised).getTime() > 0
+                                        ? `Last reviewed: ${new Date(problem.lastRevised).toLocaleDateString()}`
+                                        : 'Not yet reviewed'}
                                 </span>
                             </div>
-                            <h3 className="text-xl font-bold text-slate-900">{problem.title}</h3>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">{problem.title}</h3>
                             <div className="flex items-center gap-2">
                                 <a href={problem.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-sm font-medium">
                                     Solve on {problem.platform}
