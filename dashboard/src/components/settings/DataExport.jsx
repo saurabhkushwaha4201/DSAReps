@@ -72,12 +72,11 @@ const DataExport = () => {
                 <button
                     onClick={handleExport}
                     disabled={loading}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm font-medium hover:bg-indigo-600/10 hover:border-indigo-500 hover:text-indigo-400 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-indigo-600/10 hover:border-indigo-500 hover:text-indigo-400 disabled:opacity-50 transition-colors"
                 >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                     {loading ? 'Exporting...' : 'Export My Data (JSON)'}
-                </button>
-            </div>
+                </button>            </div>
         </div>
     );
 };

@@ -11,11 +11,11 @@ const CELL_SIZE = 12;
 const CELL_GAP = 4;
 const GRID_STEP = CELL_SIZE + CELL_GAP;
 const LEVEL_CLASSES = [
-  'bg-slate-800',
-  'bg-emerald-950',
-  'bg-emerald-800',
-  'bg-emerald-600',
-  'bg-emerald-400',
+  'bg-slate-200 dark:bg-slate-800',
+  'bg-emerald-200 dark:bg-emerald-950',
+  'bg-emerald-400 dark:bg-emerald-800',
+  'bg-emerald-500 dark:bg-emerald-600',
+  'bg-emerald-600 dark:bg-emerald-400',
 ];
 
 function getLevel(count) {
@@ -148,7 +148,7 @@ export default function ContributionHeatmap({ heatmap = [] }) {
   }, [calendarGrid]);
 
   return (
-    <div className="relative rounded-2xl border border-slate-800 bg-slate-950 p-6 text-slate-100 shadow-sm">
+    <div className="relative rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950 p-6 text-slate-700 dark:text-slate-100 shadow-sm">
       {tooltip.visible && (
         <div
           className="pointer-events-none fixed z-50 whitespace-nowrap rounded-md border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-100 shadow-lg"
@@ -188,13 +188,13 @@ export default function ContributionHeatmap({ heatmap = [] }) {
       </style>
 
       <div className="mb-4 flex items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-white">Activity</h3>
-        <span className="text-xs text-slate-400">{totalActivities} activities in the last 365 days</span>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Activity</h3>
+        <span className="text-xs text-slate-500 dark:text-slate-400">{totalActivities} activities in the last 365 days</span>
       </div>
 
       <div ref={scrollRef} className="heatmap-scroll overflow-x-auto pb-2">
         <div className="min-w-max">
-          <div className="relative mb-2 ml-8 h-4 text-[10px] text-slate-500">
+          <div className="relative mb-2 ml-8 h-4 text-[10px] text-slate-400 dark:text-slate-500">
             {monthLabels.map((month) => (
               <span
                 key={month.key}
@@ -208,7 +208,7 @@ export default function ContributionHeatmap({ heatmap = [] }) {
 
           <div className="flex items-start gap-3">
             <div
-              className="relative w-5 text-[10px] text-slate-500"
+              className="relative w-5 text-[10px] text-slate-400 dark:text-slate-500"
               style={{ height: `${7 * CELL_SIZE + 6 * CELL_GAP}px` }}
             >
               {DAY_LABELS.map((item) => (
@@ -249,6 +249,8 @@ export default function ContributionHeatmap({ heatmap = [] }) {
                       className={`h-3 w-3 rounded-xs border border-white/5 transition-transform duration-100 hover:scale-125 ${LEVEL_CLASSES[entry.level]}`}
                       onMouseEnter={(event) => handleMouseEnter(event, entry)}
                       onMouseLeave={handleMouseLeave}
+                      onFocus={(event) => handleMouseEnter(event, entry)}
+                      onBlur={handleMouseLeave}
                       aria-label={`${entry.count} activities on ${tooltipDateFormatter.format(entry.dateObj)}`}
                     />
                   );
@@ -259,13 +261,13 @@ export default function ContributionHeatmap({ heatmap = [] }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-end gap-2 text-[11px] text-slate-400">
+      <div className="mt-4 flex items-center justify-end gap-2 text-[11px] text-slate-500 dark:text-slate-400">
         <span>Less</span>
         <div className="flex gap-1">
-          {LEVEL_CLASSES.map((className) => (
+          {LEVEL_CLASSES.map((cls) => (
             <div
-              key={className}
-              className={`h-3 w-3 rounded-xs border border-white/5 ${className}`}
+              key={cls}
+              className={`h-3 w-3 rounded-xs border border-black/5 dark:border-white/5 ${cls}`}
             />
           ))}
         </div>
@@ -274,3 +276,4 @@ export default function ContributionHeatmap({ heatmap = [] }) {
     </div>
   );
 }
+

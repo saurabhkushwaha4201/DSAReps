@@ -14,6 +14,7 @@ const STATES = {
 // State Variables
 let currentProblem = null;
 let isAuth = false;
+let userIntervals = { hard: 1, medium: 3, easy: 5 };
 
 // DOM Elements
 const views = {};
@@ -72,7 +73,13 @@ async function init() {
             return;
         }
 
-        // 2. Check Page Content (if auth is good)
+        // 2. Fetch user's revision intervals to show correct button labels
+        try {
+            const { intervals } = await chrome.runtime.sendMessage({ type: 'GET_INTERVALS' });
+            if (intervals) userIntervals = intervals;
+        } catch (_) { /* use defaults */ }
+
+        // 3. Check Page Content (if auth is good)
         setLoading('Detecting problem context...');
         checkCurrentPage();
 
@@ -122,6 +129,18 @@ function renderForm(problem) {
 
     // Default Difficulty based on platform logic could go here
     if (diffSelect) diffSelect.value = 'Medium';
+
+    // Update button labels with user's actual revision intervals
+    const labels = { Hard: userIntervals.hard, Medium: userIntervals.medium, Easy: userIntervals.easy };
+    const group = document.getElementById('difficulty-group');
+    if (group) {
+        group.querySelectorAll('[data-val]').forEach(btn => {
+            const val = btn.dataset.val; // 'Hard', 'Medium', 'Easy'
+            const days = labels[val];
+            const span = btn.querySelector('span');
+            if (span && days !== undefined) span.textContent = `Review in ${days}d`;
+        });
+    }
 
     showState(STATES.FORM);
 
@@ -189,20 +208,14 @@ document.getElementById('save-form').addEventListener('submit', async (e) => {
     if (!currentProblem) return;
 
     const difficulty = document.getElementById('difficulty').value;
-    const timeSpent = document.getElementById('time-spent').value;
     const notes = document.getElementById('notes').value;
-    const attemptType = document.getElementById('attempt-type').value;
 
     const btnSave = document.getElementById('btn-save');
     const msgDiv = document.getElementById('duplicate-msg');
-    const attemptSelect = document.getElementById('attempt-type');
 
     if (btnSave) {
         btnSave.disabled = true;
         btnSave.innerText = 'Saving...';
-    }
-    if (attemptSelect) {
-        attemptSelect.disabled = true;
     }
 
     const payload = {
@@ -210,8 +223,6 @@ document.getElementById('save-form').addEventListener('submit', async (e) => {
         title: currentProblem.problemTitle,
         url: currentProblem.url,
         difficulty: difficulty.toLowerCase(),
-        attemptType: attemptType,
-        timeSpent: timeSpent ? parseInt(timeSpent) : 0,
         notes: notes
     };
 

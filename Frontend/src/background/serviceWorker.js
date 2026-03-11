@@ -54,14 +54,106 @@ async function fetchAndUpdateBadge() {
 
 chrome.alarms.create("refreshTasks", { periodInMinutes: 120 });
 
-chrome.alarms.onAlarm.addListener((alarm) => {
+chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "refreshTasks") {
     fetchAndUpdateBadge();
+    scheduleDigestAlarm(); // Re-read settings in case they changed
+  }
+  if (alarm.name === "dailyDigest") {
+    fireDailyDigest();
   }
 });
 
-// Also refresh on service worker startup
+// Refresh badge and set up digest alarm on service worker startup
 fetchAndUpdateBadge();
+scheduleDigestAlarm();
+
+/* ===============================
+   DAILY DIGEST NOTIFICATIONS
+================================ */
+
+async function scheduleDigestAlarm(enabled, time) {
+  await chrome.alarms.clear("dailyDigest");
+
+  // If values are passed directly (from UPDATE_ALARM), use them.
+  // Otherwise, fetch from API.
+  let notifEnabled = enabled;
+  let notifTime = time;
+
+  if (notifEnabled === undefined) {
+    try {
+      const isAuth = await AuthService.isAuthenticated();
+      if (!isAuth) return;
+      const data = await apiFetch("/api/user/settings");
+      notifEnabled = data.settings.notificationEnabled;
+      notifTime = data.settings.notificationTime || "09:00";
+    } catch (err) {
+      console.warn("[BG] scheduleDigestAlarm fetch failed:", err.message);
+      return;
+    }
+  }
+
+  if (!notifEnabled) {
+    console.log("[BG] Notifications disabled, alarm cleared.");
+    return;
+  }
+
+  const [hours, minutes] = (notifTime || "09:00").split(":").map(Number);
+  const now = new Date();
+  const target = new Date();
+  target.setHours(hours, minutes, 0, 0);
+
+  // If today's slot has already passed, aim for tomorrow
+  if (target <= now) {
+    target.setDate(target.getDate() + 1);
+  }
+
+  chrome.alarms.create("dailyDigest", {
+    when: target.getTime(),
+    periodInMinutes: 1440,
+  });
+
+  console.log(`[BG] Daily digest alarm set for ${target.toLocaleTimeString()}`);
+}
+
+function getDynamicGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good Morning";
+  if (hour < 18) return "Good Afternoon";
+  return "Good Evening";
+}
+
+async function fireDailyDigest() {
+  try {
+    const isAuth = await AuthService.isAuthenticated();
+    if (!isAuth) return;
+
+    const data = await apiFetch("/api/problems/today");
+    const count = data?.problems?.length || 0;
+
+    if (count === 0) return; // Nothing due — stay silent
+
+    const greeting = getDynamicGreeting();
+
+    chrome.notifications.create("dailyDigest", {
+      type: "basic",
+      iconUrl: "icons/icon128.png",
+      title: `${greeting}! Ready to code? 💻`,
+      message: `We've queued up ${count} problem${count !== 1 ? "s" : ""} for you to review today. Let's get it done!`,
+      priority: 1,
+    });
+  } catch (err) {
+    console.warn("[BG] fireDailyDigest failed:", err.message);
+  }
+}
+
+// Open Today's Focus page when user clicks the notification
+chrome.notifications.onClicked.addListener((notificationId) => {
+  if (notificationId === "dailyDigest") {
+    chrome.tabs.create({ url: `${DASHBOARD_URL}/dashboard` });
+    chrome.notifications.clear(notificationId);
+  }
+});
 
 /* ===============================
    MESSAGE LISTENERS
@@ -182,6 +274,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch((err) => {
         console.error("[BG] Rate problem error:", err);
         sendResponse({ error: err.message || "RATE_FAILED" });
+      });
+    return true;
+  }
+
+  // ── Instantly reschedule digest alarm when user saves settings ──
+  if (message.type === "UPDATE_ALARM") {
+    scheduleDigestAlarm(message.notifEnabled, message.notifTime);
+    sendResponse({ success: true });
+    return true;
+  }
+
+  // ── Fetch user's revision intervals so popup/content can show correct labels ──
+  if (message.type === "GET_INTERVALS") {
+    apiFetch("/api/user/settings")
+      .then((data) => {
+        const intervals = data?.settings?.revisionIntervals || { hard: 1, medium: 3, easy: 5 };
+        sendResponse({ intervals });
+      })
+      .catch(() => {
+        sendResponse({ intervals: { hard: 1, medium: 3, easy: 5 } });
       });
     return true;
   }

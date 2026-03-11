@@ -34,14 +34,11 @@ export const PLATFORM_CONFIGS = {
     platform: 'cses',
     host: 'cses.fi',
     isProblemPage: (url) => /\/problemset\/task\/\d+/.test(url),
-    // Image 2 ke hisaab se: Title 'h1' ke andar hota hai jo 'title-block' mein hai
-    titleSelector: 'div.title-block h1', 
-    injectPosition: 'afterend',
+    // Title is inside h1 within the title-block container
+    titleSelector: 'div.title-block h1',    injectPosition: 'afterend',
     titleCleanup: ' - CSES',
     capsuleEnabled: true,
-    capsuleOffset: { bottom: 20, right: 20 },
-    slugIndex: null,
-  },
+    titleCleanup: /( - GeeksforGeeks|GeeksforGeeks)$/,    titleCleanup: /( - GeeksforGeeks|GeeksforGeeks)$/,  },
 
   codeforces: {
     platform: "codeforces",

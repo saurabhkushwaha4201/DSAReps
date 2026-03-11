@@ -34,6 +34,14 @@ export default function ProblemList() {
 
     useEffect(() => {
         loadProblems(1);
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                loadProblems(1);
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, []);
 
     const loadProblems = async (pageNum) => {
@@ -207,13 +215,13 @@ export default function ProblemList() {
                 <div className="flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-lg w-fit">
                     <button
                         onClick={() => setView('active')}
-                        className={`h-9 px-5 text-sm font-medium rounded-md transition-all ${view === 'active' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                        className={`h-9 px-5 text-sm font-medium rounded-md transition-all cursor-pointer ${view === 'active' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700/60'}`}
                     >
                         Active
                     </button>
                     <button
                         onClick={() => setView('archived')}
-                        className={`h-9 px-5 text-sm font-medium rounded-md transition-all ${view === 'archived' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                        className={`h-9 px-5 text-sm font-medium rounded-md transition-all cursor-pointer ${view === 'archived' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700/60'}`}
                     >
                         Archived
                     </button>
@@ -239,7 +247,7 @@ export default function ProblemList() {
                             <button
                                 key={filter}
                                 onClick={() => setActiveFilter(filter)}
-                                className={`h-9 px-2 text-xs font-medium rounded-md transition-all ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80'}`}
+                                className={`h-9 px-2 text-xs font-medium rounded-md transition-all cursor-pointer ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80 hover:scale-105 active:scale-95'}`}
                             >
                                 {filter}
                             </button>
@@ -251,7 +259,7 @@ export default function ProblemList() {
                             <button
                                 key={filter}
                                 onClick={() => setActiveFilter(filter)}
-                                className={`h-9 px-2 text-xs font-medium rounded-md transition-all ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80'}`}
+                                className={`h-9 px-2 text-xs font-medium rounded-md transition-all cursor-pointer ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80 hover:scale-105 active:scale-95'}`}
                             >
                                 {filter}
                             </button>
@@ -265,7 +273,7 @@ export default function ProblemList() {
                         <button
                             key={filter}
                             onClick={() => setActiveFilter(filter)}
-                            className={`h-9 px-4 text-sm font-medium rounded-md transition-all whitespace-nowrap ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80'}`}
+                            className={`h-9 px-4 text-sm font-medium rounded-md transition-all whitespace-nowrap cursor-pointer ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80 hover:scale-105 active:scale-95'}`}
                         >
                             {filter}
                         </button>

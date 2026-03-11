@@ -80,9 +80,14 @@ const STYLES = `
   }
 
   .panel-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #cdd6f4;
+    font-size: 13px;
+    font-weight: 700;
+    color: #89b4fa;
+    background: rgba(137,180,250,0.12);
+    border: 1px solid rgba(137,180,250,0.25);
+    border-radius: 999px;
+    padding: 2px 10px;
+    letter-spacing: 0.2px;
   }
 
   .panel-close {
@@ -184,6 +189,60 @@ const STYLES = `
     transform: none;
   }
 
+  /* ── Task Title Link ─────────────────────────────────────── */
+  .task-title-link {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #cdd6f4;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    transition: color 0.15s;
+  }
+  .task-title-link:hover {
+    color: #89b4fa;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .task-title-link .task-title-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .task-title-link .ext-icon {
+    font-size: 11px;
+    flex-shrink: 0;
+    opacity: 0.55;
+  }
+  .task-title-link:hover .ext-icon { opacity: 1; }
+
+  /* ── Header Nav Arrows ───────────────────────────────────── */
+  .panel-title-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .panel-nav-btn {
+    background: none;
+    border: none;
+    color: #6c7086;
+    cursor: pointer;
+    font-size: 15px;
+    padding: 2px 5px;
+    line-height: 1;
+    border-radius: 4px;
+    font-family: inherit;
+    transition: color 0.15s, background 0.15s;
+  }
+  .panel-nav-btn:hover:not(:disabled) {
+    color: #cdd6f4;
+    background: #313244;
+  }
+  .panel-nav-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+
   /* ── Progress Dots ───────────────────────────────────────── */
   .progress-dots {
     display: flex;
@@ -197,12 +256,12 @@ const STYLES = `
     height: 8px;
     border-radius: 50%;
     background: #45475a;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.15s;
     cursor: pointer;
   }
-
-  .prog-dot.active { background: #89b4fa; }
-  .prog-dot.done { background: #a6e3a1; }
+  .prog-dot:not(.done):not(.active):hover { transform: scale(1.4); }
+  .prog-dot.done  { background: #a6e3a1; cursor: default; }
+  .prog-dot.active { background: #89b4fa; cursor: default; }
 
   /* ── Empty State ─────────────────────────────────────────── */
   .empty-state {
@@ -387,9 +446,21 @@ export default function FloatingCapsule() {
         ) : (
           <div className="capsule-panel">
             <div className="panel-header">
-              <span className="panel-title">
-                Task {completedIds.size + 1} of {originalTotal}
-              </span>
+              <div className="panel-title-group">
+                <button
+                  className="panel-nav-btn"
+                  disabled={currentIdx === 0}
+                  onClick={() => setCurrentIdx(i => Math.max(0, i - 1))}
+                >‹</button>
+                <span className="panel-title">
+                  Task {completedIds.size + currentIdx + 1} of {originalTotal}
+                </span>
+                <button
+                  className="panel-nav-btn"
+                  disabled={tasks.length === 0 || currentIdx >= tasks.length - 1}
+                  onClick={() => setCurrentIdx(i => Math.min(tasks.length - 1, i + 1))}
+                >›</button>
+              </div>
               <button className="panel-close" onClick={() => setExpanded(false)}>
                 ✕
               </button>
@@ -424,9 +495,22 @@ export default function FloatingCapsule() {
               {!loading && currentTask && (
                 <>
                   <div className="task-card">
-                    <div className="task-title" title={currentTask.title}>
-                      {currentTask.title}
-                    </div>
+                    {currentTask.url ? (
+                      <a
+                        className="task-title-link"
+                        href={currentTask.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={currentTask.title}
+                      >
+                        <span className="task-title-text">{currentTask.title}</span>
+                        <span className="ext-icon">↗</span>
+                      </a>
+                    ) : (
+                      <div className="task-title" title={currentTask.title}>
+                        {currentTask.title}
+                      </div>
+                    )}
                     <div className="task-meta">
                       <span className={`task-badge badge-${currentTask.difficulty}`}>
                         {currentTask.difficulty}
@@ -466,11 +550,16 @@ export default function FloatingCapsule() {
                     <div className="progress-dots">
                       {Array.from({ length: originalTotal }).map((_, i) => {
                         const isDone = i < completedIds.size;
-                        const isActive = i === completedIds.size;
+                        const isActive = i === completedIds.size + currentIdx;
                         return (
                           <span
                             key={i}
                             className={`prog-dot ${isDone ? 'done' : ''} ${isActive ? 'active' : ''}`}
+                            onClick={() => {
+                              if (!isDone && !isActive) {
+                                setCurrentIdx(i - completedIds.size);
+                              }
+                            }}
                           />
                         );
                       })}
