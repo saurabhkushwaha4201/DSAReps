@@ -96,7 +96,10 @@ export default function ProblemCard({ problem, onMarkRevised, onArchive, onResto
                         {isPinned && (
                             <>
                                 <span>•</span>
-                                <span className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-medium">
+                                <span
+                                    title="Manually scheduled by you"
+                                    className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-medium cursor-default"
+                                >
                                     <Pin className="w-3 h-3" /> Pinned
                                 </span>
                             </>
@@ -116,7 +119,7 @@ export default function ProblemCard({ problem, onMarkRevised, onArchive, onResto
                                         className={`inline-flex items-center gap-1 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:underline ${
                                             overdue ? 'text-red-500 dark:text-red-400' :
                                             due ? 'text-amber-500 dark:text-amber-400' :
-                                            'text-slate-400 dark:text-slate-500 hover:text-indigo-500 dark:hover:text-indigo-400'
+                                            'text-slate-400 dark:text-slate-500 hover:text-indigo-500 dark:hover:text-indigo-400 cursor-pointer'
                                         }`}
                                         title="Click to reschedule"
                                     >

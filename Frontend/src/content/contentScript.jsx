@@ -276,15 +276,19 @@ async function injectAndSync(config) {
       // Already saved — remove from backend first, then local cache
       const saved = await StorageController.get(problemId);
       if (saved?.dbId) {
-        await new Promise((resolve) => {
+        const response = await new Promise((resolve) => {
           chrome.runtime.sendMessage({ type: 'REMOVE_PROBLEM', data: { dbId: saved.dbId } }, resolve);
         });
+        if (response?.error) {
+          showToast('Failed to remove problem', '❌');
+          btn.style.pointerEvents = 'auto';
+          return;
+        }
       }
       await StorageController.remove(problemId);
       btn.classList.remove('is-saved', 'just-saved');
       showToast('Problem removed from tracker', '🗑️');
-      btn.style.pointerEvents = 'auto';
-    } else {
+      btn.style.pointerEvents = 'auto';    } else {
       // Not saved — open modal first, only save after user confirms
       btn.style.pointerEvents = 'auto';
       openCaptureModal(
@@ -352,9 +356,7 @@ async function tryInjectAll() {
   injectFloatingCapsule();
   await injectAndSync(config);
 }
-
-// Combined observer: handles lazy-loaded titles (DOM changes) + SPA URL changes
-let lastUrl = location.href;
+let injectTimeout = null;
 
 const observer = new MutationObserver(() => {
   if (location.href !== lastUrl) {
@@ -364,7 +366,8 @@ const observer = new MutationObserver(() => {
     setTimeout(() => tryInjectAll(), 500);
   } else {
     // DOM changed — try to inject if title now available
-    tryInjectAll();
+    if (injectTimeout) clearTimeout(injectTimeout);
+    injectTimeout = setTimeout(() => tryInjectAll(), 100);
   }
 });
 

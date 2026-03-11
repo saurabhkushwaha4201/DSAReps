@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 /**
  * Capture Modal — rendered inside Shadow DOM
@@ -155,6 +155,14 @@ const STYLES = `
 export default function CaptureModal({ problemDetails, onClose }) {
   const [coreTrick, setCoreTrick] = useState('');
   const [status, setStatus] = useState(null); // null | 'saving' | 'success' | 'error' | 'duplicate'
+  const [intervals, setIntervals] = useState({ hard: 1, medium: 3, easy: 5 });
+
+  // Fetch user's revision intervals so labels stay in sync with dashboard settings
+  useEffect(() => {
+    chrome.runtime.sendMessage({ type: 'GET_INTERVALS' }, (res) => {
+      if (res?.intervals) setIntervals(res.intervals);
+    });
+  }, []);
 
   const handleSave = async (difficulty) => {
     if (!problemDetails) return;
@@ -236,15 +244,15 @@ export default function CaptureModal({ problemDetails, onClose }) {
               <div className="difficulty-grid">
                 <button className="diff-btn hard" onClick={() => handleSave('hard')}>
                   Hard
-                  <span className="interval">Review in 1d</span>
+                  <span className="interval">Review in {intervals.hard}d</span>
                 </button>
                 <button className="diff-btn medium" onClick={() => handleSave('medium')}>
                   Medium
-                  <span className="interval">Review in 3d</span>
+                  <span className="interval">Review in {intervals.medium}d</span>
                 </button>
                 <button className="diff-btn easy" onClick={() => handleSave('easy')}>
                   Easy
-                  <span className="interval">Review in 5d</span>
+                  <span className="interval">Review in {intervals.easy}d</span>
                 </button>
               </div>
 

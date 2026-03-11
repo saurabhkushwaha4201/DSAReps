@@ -1,15 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "DSA Revision Tracker",
+  "name": "DSAReps - Spaced Repetition",
+  "short_name": "DSAReps",
   "version": "1.0.0",
-  "description": "Track your DSA revisions from LeetCode, Codeforces, CSES, and GeeksforGeeks.",
+  "description": "Your personal DSA vault. Auto-sync and schedule problem revisions from top coding platforms to master algorithms faster.",
 
   "permissions": [
     "storage",
     "identity",
     "activeTab",
     "scripting",
-    "alarms"
+    "alarms",
+    "notifications",
+    "tabs"
   ],
 
   "host_permissions": [
@@ -28,14 +31,18 @@
   },
 
   "icons": {
-    "128": "icons/icon128.png"
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
   },
 
   "action": {
     "default_popup": "popup.html",
     "default_title": "Save for Revision",
     "default_icon": {
-        "128": "icons/icon128.png"
+        "16": "icons/icon-16.png",
+        "48": "icons/icon-48.png",
+        "128": "icons/icon-128.png"
     }
   },
 

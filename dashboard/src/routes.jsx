@@ -6,8 +6,7 @@ import { DashboardLayout } from './components/layout/DashboardLayout';
 import DashboardHome from './features/dashboard/DashboardHome';
 import SettingsPage from './features/dashboard/SettingsPage';
 import ProblemList from './features/problems/ProblemList';
-import FocusMode from './features/revisions/FocusMode';
-import FocusSession from './features/revisions/FocusSession';
+
 
 export const router = createBrowserRouter([
     {
@@ -18,14 +17,7 @@ export const router = createBrowserRouter([
         path: '/extension-auth-success',
         element: <AuthSuccess />,
     },
-    {
-        path: '/session',
-        element: (
-            <ProtectedRoute>
-                <FocusSession />
-            </ProtectedRoute>
-        ),
-    },
+
     {
         path: '/',
         element: (
@@ -41,10 +33,6 @@ export const router = createBrowserRouter([
             {
                 path: 'problems',
                 element: <ProblemList />,
-            },
-            {
-                path: 'focus',
-                element: <FocusMode />,
             },
             {
                 path: 'settings',

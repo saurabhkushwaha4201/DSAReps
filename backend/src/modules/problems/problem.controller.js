@@ -49,7 +49,7 @@ const updateUserStreak = async (userId, timezone = 'UTC') => {
 
   const user = await User.findById(userId).select('dailyGoal streak');
   const dailyGoal = user?.dailyGoal || 3;
-  if (completedToday !== dailyGoal) {
+  if (completedToday < dailyGoal) {
     return;
   }
 
@@ -124,7 +124,7 @@ const getAllProblems = async (req, res) => {
 
 const saveProblem = async (req, res) => {
   try {
-    const { platform, title, url, difficulty, attemptType, notes, timeSpent } = req.body;
+    const { platform, title, url, difficulty, notes } = req.body;
     const userId = req.user.id;
     const timezone = req.body.timezone || req.query.tz || 'UTC';
 
@@ -155,9 +155,7 @@ const saveProblem = async (req, res) => {
       title,
       url,
       difficulty,
-      attemptType,
       notes: notes || '',
-      timeSpent: timeSpent || 0,
       stabilityScore: 30,
       nextReviewType: 'FULL_RECODE',
       currentIntervalDays: interval,
@@ -434,21 +432,25 @@ const getStats = async (req, res) => {
 
     const problems = await Problem.find(
       { userId, isDeleted: { $ne: true }, status: { $ne: 'archived' } },
-      'difficulty stabilityScore'
+      'difficulty stabilityScore revisedCount'
     ).lean();
 
     const tagMap = {};
     problems.forEach((p) => {
       const tag = p.difficulty || 'unknown';
-      if (!tagMap[tag]) tagMap[tag] = { total: 0, count: 0 };
-      tagMap[tag].total += p.stabilityScore || 0;
-      tagMap[tag].count += 1;
+      if (!tagMap[tag]) tagMap[tag] = { total: 0, revisedCount: 0, totalCount: 0 };
+      tagMap[tag].totalCount += 1;
+      if ((p.revisedCount || 0) >= 1) {
+        tagMap[tag].total += p.stabilityScore || 0;
+        tagMap[tag].revisedCount += 1;
+      }
     });
 
     const weakClusters = Object.entries(tagMap).map(([tag, data]) => ({
       tag,
-      avgStability: Math.round(data.total / data.count),
-      count: data.count,
+      avgStability: data.revisedCount > 0 ? Math.round(data.total / data.revisedCount) : 0,
+      revisedCount: data.revisedCount,
+      totalCount: data.totalCount,
     }));
 
     const user = await User.findById(userId).select('streak').lean();

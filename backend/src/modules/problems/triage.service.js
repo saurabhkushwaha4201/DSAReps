@@ -30,19 +30,22 @@ async function getDailyTriage(userId, dailyCap = 3) {
   };
 
   // ── Phase A: Manual overrides due today or earlier ────────
+  // Pinned problems always bypass the daily cap — the user explicitly
+  // requested them, so limiting them would cause frustration.
   const overrides = await Problem.find({
     ...baseFilter,
     isManualOverride: true,
     manualOverrideDate: { $lte: endOfToday, $ne: null },
   })
     .sort({ manualOverrideDate: 1 }) // Earliest override first
-    .limit(dailyCap)
     .lean();
 
   const remainingSlots = dailyCap - overrides.length;
 
   if (remainingSlots <= 0) {
-    return overrides.slice(0, dailyCap);
+    // All slots consumed by pinned problems — still return ALL pinned
+    // (they override the cap), but no algorithmic picks added.
+    return overrides;
   }
 
   // Collect override IDs so we don't duplicate them in Phase B
