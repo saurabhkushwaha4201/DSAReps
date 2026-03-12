@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("token");
     setToken(null);
-    window.location.href = '/login'; // Hard redirect to clear any state
+
   };
 
   const isAuthenticated = Boolean(token);
