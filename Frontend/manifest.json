@@ -1,15 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "DSA Revision Tracker",
+  "name": "DSAReps - Spaced Repetition",
+  "short_name": "DSAReps",
   "version": "1.0.0",
-  "description": "Track your DSA revisions from LeetCode, Codeforces, CSES, and GeeksforGeeks.",
+  "description": "Your personal DSA vault. Auto-sync and schedule problem revisions from top coding platforms to master algorithms faster.",
 
   "permissions": [
     "storage",
     "identity",
     "activeTab",
     "scripting",
-    "alarms"
+    "alarms",
+    "notifications",
+    "tabs"
   ],
 
   "host_permissions": [
@@ -17,9 +20,7 @@
     "*://codeforces.com/*",
     "*://cses.fi/*",
     "*://www.geeksforgeeks.org/*",
-    "*://practice.geeksforgeeks.org/*",
-    "http://localhost:5175/*",
-    "http://localhost:5000/*"
+    "*://practice.geeksforgeeks.org/*"
   ],
 
   "background": {
@@ -28,14 +29,18 @@
   },
 
   "icons": {
-    "128": "icons/icon128.png"
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
   },
 
   "action": {
     "default_popup": "popup.html",
     "default_title": "Save for Revision",
     "default_icon": {
-        "128": "icons/icon128.png"
+        "16": "icons/icon-16.png",
+        "48": "icons/icon-48.png",
+        "128": "icons/icon-128.png"
     }
   },
 
@@ -48,7 +53,14 @@
         "*://codeforces.com/gym/*/problem/*",
         "*://cses.fi/problemset/task/*",
         "*://www.geeksforgeeks.org/problems/*",
-        "*://practice.geeksforgeeks.org/problems/*"
+        "*://practice.geeksforgeeks.org/problems/*",
+        "*://leetcode.com/problemset/*",
+        "*://leetcode.com/study-plan/*",
+        "*://codeforces.com/problemset/*",
+        "*://www.geeksforgeeks.org/explore*",
+        "*://practice.geeksforgeeks.org/explore*",
+        "*://cses.fi/problemset/list/*",
+        "*://cses.fi/problemset/"
       ],
       "js": ["contentScript.js"]
     }
@@ -56,12 +68,7 @@
   "web_accessible_resources": [
     {
       "resources": ["authSuccess.html", "authSuccess.js"],
-      "matches": ["<all_urls>"]
+      "matches": ["https://accounts.google.com/*"]
     }
-  ],
-
-  "externally_connectable": {
-    "matches": ["http://localhost:5000/*"]
-  },
-  "key" : "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC0YqUeJP+i3PW1hKWr7tjnewQYIfyj1l9IxLMXjMqKGJQwnHG2WpebCvYPThStS1n1jCGwqsOqatKVDApzVrRzvQxIWsYAIWETlwmF9Q78GelQaBMsNwRKXFiMeDqjjr3g3RlXTCvqwiyRQAtYd5YPph5jnc2QYtM1oazdXLWM9qMjmLgsNPxAYibZU6eqLc+HlVX3U14fQswBLOzhUzEZAcPTm1JnalYEeX1DzAeEhxI53VjoNsCRTPXczorpncxuwxuejTdkqRvO4oYVZiIHPaWlT69tWvpLUUFlu2FIXEfBlot4xXjgYMHq+3wnAm3O2Nnnvd9+X6RBYvlLLUIlAgMBAAECggEAB+Qk2wu9Ty+hZB54bOwW+xFrnW6nMbeoFXPdbdNP7PikSvgdFWAjL7osB4Ff8DDSr6ZAtwzRYHwp2DFdp6wMWt/TULr/3HOZXpUF6qFM1YSAq27SH+YMPwCJMyPzVMJi1hp2CFahuTRjZLtLg8Q/gVHAFJWLr5xTJw56lHiAzLjOiQsjImj815ioUsMuvKNxCOYkFTdRSFSHnAogdoWz9KYNG2CnydIXIifiwHH0QMtU+9jdVnNXup+0tQuDnAvRgjRvhs9tOjs4BwTAGN9lJx0RKFCOLiztZ2MmIIKUPh/AScc7hZSEgT1joqzNCTZJfCAblMd84EhFUOFY49oFwQKBgQDsaIcGsUY9duQC8vCbDI9mkgQ3HMpaau/icOD3S5xk6fRC3riIoHCbBvtn54OLKoXWLMNejTrlM4Uafwb4ce92UPnWrsFPOa7dzhnXqQgltBC5v9hPhhvJC1FfRyoC52K34MKHyyz0elDkezjYB4sNA+CFBmtY4CzW77Skxi+FkQKBgQDDVZLLJby4IJjYgANffp5ZkhR4eIvTyTwl9qYZbBbVQptpE81X4zPdE+cwNTMVJw5hW/W1e7F17wUU5IBZF5CNeawvIKS0Ud5zBXJqPOi+OLm17hBgdo0A018Fxv+qkkO6EOj4n2UT0r1e0JplcFYCjZLVM+lIC3qKEZl0007ZVQKBgQC67Xu2wv1zJEruOgId1zScOeCzY0Rtchjzx6VaZKLo+ER3i3wGLDZdnouzgM/2fk0NKJ/iZ3GmQbKBXOe6EvzxZN3n7o5TgpzOLWUprTIP/e0rspHrb3MQ6K4S1EZXvXXFRycKEJEfTogf4X708iH0zJf/FzBSOg+6dBc2Iq74wQKBgG1H3cVLioZUrk5JaBmv4/VmlY9Ema3V4pG2qPyGDUwoZHvn+TTXRrfDn87HpJmL7S6o3RE4b3L0Uxp6MBgn59ZOoPcIwzyipNoizP0EsI1jfPp8gqsFCCPTHVFFINoT1FIvjbcyrcDmYM2/1PE1ZNkuzVv8G+ITke3WpMzIP0+1AoGBAMDFZpdpJazmgSIU16PaGL3iLSC4Iumzmmxmt7Gac2V6tVheMiFG1MOP+yD4aII+fMkrdzUvc8eDUywRConeWiSyGiNaa6I/BObKmaVh0o44lKxLxt0nMPggMVCF9MfiqSXERhGUjMgCKjnt50gVtQJ2VwqfoVNqKiGuhgLa+zCd"
+  ]
 }

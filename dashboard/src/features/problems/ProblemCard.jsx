@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Archive, RotateCcw, ExternalLink, CheckCircle, StickyNote, CalendarClock, Pin, X } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Archive, RotateCcw, ExternalLink, CheckCircle, StickyNote, Pin } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
-import { useLocalData } from '../../hooks/useLocalData';
 import { rescheduleProblem } from '../../api/problem.api';
+import { ReschedulePopover } from './ReschedulePopover';
+import { format, isToday, isPast } from 'date-fns';
 import toast from 'react-hot-toast';
 
 const PLATFORM_COLORS = {
@@ -29,32 +30,27 @@ function PlatformBadge({ platform }) {
 
 export default function ProblemCard({ problem, onMarkRevised, onArchive, onRestore, onOpenNotes, onReschedule }) {
     const isOnline = useOnlineStatus();
-    const { getProblemNote } = useLocalData();
-    const [showDatePicker, setShowDatePicker] = useState(false);
-    const [rescheduleDate, setRescheduleDate] = useState('');
+    const [showPopover, setShowPopover] = useState(false);
     const [rescheduling, setRescheduling] = useState(false);
+    const calBtnRef = useRef(null);
 
     // Normalization
     const id = problem._id || problem.id;
     const isArchived = problem.status === 'archived';
-    const hasNotes = !!getProblemNote(id);
+    // Use the server-side notes field instead of localStorage for accurate indicator
+    const hasNotes = !!(problem.notes && problem.notes.trim());
     const isPinned = problem.isManualOverride;
 
     const today = new Date().toISOString().split('T')[0];
     const maxDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    const handleReschedule = async () => {
-        if (!rescheduleDate) {
-            toast.error('Pick a date first');
-            return;
-        }
+    const handleReschedule = async (date) => {
         setRescheduling(true);
         try {
-            await rescheduleProblem(id, rescheduleDate);
-            toast.success('Problem pinned to ' + rescheduleDate);
-            setShowDatePicker(false);
-            setRescheduleDate('');
-            onReschedule?.();
+            const dateStr = format(date, 'yyyy-MM-dd');
+            await rescheduleProblem(id, dateStr);
+            toast.success('Pinned to ' + format(date, 'EEE, MMM d'));
+            onReschedule?.(id, date);
         } catch (err) {
             const msg = err?.response?.data?.message || 'Failed to reschedule';
             toast.error(msg);
@@ -99,11 +95,38 @@ export default function ProblemCard({ problem, onMarkRevised, onArchive, onResto
                         {isPinned && (
                             <>
                                 <span>•</span>
-                                <span className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-medium">
+                                <span
+                                    title="Manually scheduled by you"
+                                    className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-medium cursor-default"
+                                >
                                     <Pin className="w-3 h-3" /> Pinned
                                 </span>
                             </>
                         )}
+                        {!isArchived && problem.nextReviewDate && (() => {
+                            const d = new Date(problem.nextReviewDate);
+                            const overdue = isPast(d) && !isToday(d);
+                            const due = isToday(d);
+                            const label = overdue ? 'Overdue' : due ? 'Due today' : `Due ${format(d, 'MMM d')}`;
+                            return (
+                                <>
+                                    <span>•</span>
+                                    <button
+                                        ref={calBtnRef}
+                                        onClick={() => !isArchived && isOnline && setShowPopover(v => !v)}
+                                        disabled={!isOnline || rescheduling}
+                                        className={`inline-flex items-center gap-1 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:underline cursor-pointer ${
+                                            overdue ? 'text-red-500 dark:text-red-400' :
+                                            due ? 'text-amber-500 dark:text-amber-400' :
+                                            'text-slate-400 dark:text-slate-500 hover:text-indigo-500 dark:hover:text-indigo-400'
+                                        }`}
+                                        title="Click to reschedule"
+                                    >
+                                        {label}
+                                    </button>
+                                </>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>
@@ -130,19 +153,12 @@ export default function ProblemCard({ problem, onMarkRevised, onArchive, onResto
                             <StickyNote className="w-4 h-4" />
                         </button>
 
-                        {/* Reschedule */}
-                        <button
-                            onClick={() => setShowDatePicker(!showDatePicker)}
-                            disabled={!isOnline}
-                            className={`p-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                                isPinned
-                                    ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
-                                    : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
-                            }`}
-                            title="Reschedule / Pin to date"
-                        >
-                            <CalendarClock className="w-4 h-4" />
-                        </button>
+                        <ReschedulePopover
+                            isOpen={showPopover}
+                            onClose={() => setShowPopover(false)}
+                            onSelect={handleReschedule}
+                            triggerRef={calBtnRef}
+                        />
 
                         {/* Mark Revised */}
                         <Button
@@ -175,32 +191,6 @@ export default function ProblemCard({ problem, onMarkRevised, onArchive, onResto
                     </button>
                 )}
             </div>
-            {/* Inline date picker */}
-            {showDatePicker && (
-                <div className="w-full mt-2 flex items-center gap-2 px-4 pb-2">
-                    <input
-                        type="date"
-                        min={today}
-                        max={maxDate}
-                        value={rescheduleDate}
-                        onChange={(e) => setRescheduleDate(e.target.value)}
-                        className="px-3 py-1.5 text-sm border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                    />
-                    <button
-                        onClick={handleReschedule}
-                        disabled={rescheduling || !rescheduleDate}
-                        className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 rounded-lg transition-colors"
-                    >
-                        {rescheduling ? 'Pinning...' : 'Pin'}
-                    </button>
-                    <button
-                        onClick={() => { setShowDatePicker(false); setRescheduleDate(''); }}
-                        className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg transition-colors"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
-            )}
         </Card>
     );
 };

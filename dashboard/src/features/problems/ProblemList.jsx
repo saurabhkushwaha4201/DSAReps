@@ -3,7 +3,7 @@ import ProblemCard from './ProblemCard';
 import AddProblemModal from './AddProblemModal';
 import { NotesDrawer } from '../../components/notes/NotesDrawer';
 import toast from 'react-hot-toast';
-import { getAllProblems, archiveProblem, unarchiveProblem } from '../../api/problem.api';
+import { getAllProblems, archiveProblem, unarchiveProblem, reviseProblem } from '../../api/problem.api';
 import { Loader2, ChevronDown, Plus } from 'lucide-react';
 
 // --- MOCK DATA (Fallback) ---
@@ -26,12 +26,22 @@ export default function ProblemList() {
     const [activeProblem, setActiveProblem] = useState(null);
     // Add Problem modal
     const [showAddModal, setShowAddModal] = useState(false);
+    // Rating picker: { id, title } of problem being rated, or null
+    const [ratingTarget, setRatingTarget] = useState(null);
 
     // Helpers
     const getId = (prob) => prob._id || prob.id;
 
     useEffect(() => {
         loadProblems(1);
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                loadProblems(1);
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, []);
 
     const loadProblems = async (pageNum) => {
@@ -115,6 +125,30 @@ export default function ProblemList() {
         }
     };
 
+    const handleMarkRevised = (problem) => {
+        setRatingTarget({ id: getId(problem), title: problem.title });
+    };
+
+    const handleRatingSubmit = async (rating) => {
+        if (!ratingTarget) return;
+        const { id } = ratingTarget;
+        setRatingTarget(null);
+        try {
+            await reviseProblem(id, rating);
+            toast.success(`Marked as revised (${rating.toLowerCase()})`)
+        } catch (err) {
+            toast.error('Failed to save revision');
+        }
+    };
+
+    const handleReschedule = (id, date) => {
+        setProblems(prev => prev.map(p =>
+            getId(p) === id
+                ? { ...p, nextReviewDate: date.toISOString(), isManualOverride: true }
+                : p
+        ));
+    };
+
     // Update notes in local state when saved in NotesDrawer
     const handleNotesUpdate = (problemId, newNotes) => {
         setProblems(prev => prev.map(p =>
@@ -181,13 +215,13 @@ export default function ProblemList() {
                 <div className="flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-lg w-fit">
                     <button
                         onClick={() => setView('active')}
-                        className={`h-9 px-5 text-sm font-medium rounded-md transition-all ${view === 'active' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                        className={`h-9 px-5 text-sm font-medium rounded-md transition-all cursor-pointer ${view === 'active' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700/60'}`}
                     >
                         Active
                     </button>
                     <button
                         onClick={() => setView('archived')}
-                        className={`h-9 px-5 text-sm font-medium rounded-md transition-all ${view === 'archived' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                        className={`h-9 px-5 text-sm font-medium rounded-md transition-all cursor-pointer ${view === 'archived' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700/60'}`}
                     >
                         Archived
                     </button>
@@ -213,19 +247,19 @@ export default function ProblemList() {
                             <button
                                 key={filter}
                                 onClick={() => setActiveFilter(filter)}
-                                className={`h-9 px-2 text-xs font-medium rounded-md transition-all ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80'}`}
+                                className={`h-9 px-2 text-xs font-medium rounded-md transition-all cursor-pointer ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80 hover:scale-105 active:scale-95'}`}
                             >
                                 {filter}
                             </button>
                         ))}
                     </div>
                     {/* Row 2: Platform filters */}
-                    <div className="grid grid-cols-3 gap-1.5">
-                        {['LeetCode', 'Codeforces', 'CSES', 'GFG', 'Other'].map((filter) => (
+                    <div className="grid grid-cols-2 gap-1.5">
+                        {['LeetCode', 'Codeforces', 'CSES', 'GFG'].map((filter) => (
                             <button
                                 key={filter}
                                 onClick={() => setActiveFilter(filter)}
-                                className={`h-9 px-2 text-xs font-medium rounded-md transition-all ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80'}`}
+                                className={`h-9 px-2 text-xs font-medium rounded-md transition-all cursor-pointer ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80 hover:scale-105 active:scale-95'}`}
                             >
                                 {filter}
                             </button>
@@ -235,11 +269,11 @@ export default function ProblemList() {
 
                 {/* Desktop: Single row */}
                 <div className="hidden md:flex items-center gap-2">
-                    {['All', 'Easy', 'Medium', 'Hard', 'LeetCode', 'Codeforces', 'CSES', 'GFG', 'Other'].map((filter) => (
+                    {['All', 'Easy', 'Medium', 'Hard', 'LeetCode', 'Codeforces', 'CSES', 'GFG'].map((filter) => (
                         <button
                             key={filter}
                             onClick={() => setActiveFilter(filter)}
-                            className={`h-9 px-4 text-sm font-medium rounded-md transition-all whitespace-nowrap ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80'}`}
+                            className={`h-9 px-4 text-sm font-medium rounded-md transition-all whitespace-nowrap cursor-pointer ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80 hover:scale-105 active:scale-95'}`}
                         >
                             {filter}
                         </button>
@@ -255,16 +289,17 @@ export default function ProblemList() {
                             <ProblemCard
                                 key={getId(prob)}
                                 problem={prob}
-                                onMarkRevised={() => {}}
+                                onMarkRevised={handleMarkRevised}
                                 onArchive={handleArchive}
                                 onRestore={handleRestore}
                                 onOpenNotes={handleOpenNotes}
+                                onReschedule={handleReschedule}
                             />
                         ))}
                     </>
                 ) : view === 'active' ? (
                     /* Head Start Section - Only for Active view when empty */
-                    <HeadStartSection problems={problems} onOpenNotes={handleOpenNotes} />
+                    <HeadStartSection problems={problems} onOpenNotes={handleOpenNotes} onMarkRevised={handleMarkRevised} />
                 ) : (
                     <div className="text-center py-12 text-slate-500 dark:text-slate-400">
                         No archived problems found.
@@ -310,6 +345,53 @@ export default function ProblemList() {
                 onClose={() => setShowAddModal(false)}
                 onAdded={() => loadProblems(1)}
             />
+
+            {/* Rating Picker Modal */}
+            {ratingTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setRatingTarget(null)}>
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 w-[420px] mx-4" onClick={e => e.stopPropagation()}>
+                        <div className="text-center mb-6">
+                            <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                <span className="text-2xl">🧠</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">How did it go?</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-xs mx-auto">{ratingTarget.title}</p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            <button
+                                onClick={() => handleRatingSubmit('CLEAN')}
+                                className="cursor-pointer flex flex-col items-center gap-2 p-5 rounded-2xl border-2 border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95 transition-all duration-150"
+                            >
+                                <span className="text-3xl">✅</span>
+                                <span className="text-sm font-bold">Clean</span>
+                                <span className="text-xs text-emerald-600 dark:text-emerald-500 font-medium">Got it</span>
+                            </button>
+                            <button
+                                onClick={() => handleRatingSubmit('SLOW')}
+                                className="cursor-pointer flex flex-col items-center gap-2 p-5 rounded-2xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:scale-105 hover:shadow-lg hover:shadow-amber-500/20 active:scale-95 transition-all duration-150"
+                            >
+                                <span className="text-3xl">🐢</span>
+                                <span className="text-sm font-bold">Slow</span>
+                                <span className="text-xs text-amber-600 dark:text-amber-500 font-medium">Struggled</span>
+                            </button>
+                            <button
+                                onClick={() => handleRatingSubmit('FORGOT')}
+                                className="cursor-pointer flex flex-col items-center gap-2 p-5 rounded-2xl border-2 border-red-400 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 hover:scale-105 hover:shadow-lg hover:shadow-red-500/20 active:scale-95 transition-all duration-150"
+                            >
+                                <span className="text-3xl">❌</span>
+                                <span className="text-sm font-bold">Forgot</span>
+                                <span className="text-xs text-red-600 dark:text-red-500 font-medium">Blanked</span>
+                            </button>
+                        </div>
+                        <button
+                            onClick={() => setRatingTarget(null)}
+                            className="cursor-pointer mt-5 w-full py-2 text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all duration-150"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -318,7 +400,7 @@ export default function ProblemList() {
  * HeadStartSection - Shown when all due items are complete
  * Suggests next 3 upcoming problems to get a head start
  */
-function HeadStartSection({ problems, onOpenNotes }) {
+function HeadStartSection({ problems, onOpenNotes, onMarkRevised }) {
     // Get next 3 upcoming problems (earliest nextReviewDate)
     const upcomingProblems = useMemo(() => {
         return problems
@@ -394,7 +476,7 @@ function HeadStartSection({ problems, onOpenNotes }) {
                         <ProblemCard
                             key={problem._id || problem.id}
                             problem={problem}
-                            onMarkRevised={() => { }}
+                            onMarkRevised={onMarkRevised}
                             onArchive={() => { }}
                             onRestore={() => { }}
                             onOpenNotes={onOpenNotes}

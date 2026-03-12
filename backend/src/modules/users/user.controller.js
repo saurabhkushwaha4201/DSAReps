@@ -7,7 +7,7 @@ const User = require('./user.model');
 const getSettings = async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
-      .select('revisionIntervals dailyGoal')
+      .select('revisionIntervals dailyGoal notificationEnabled notificationTime')
       .lean();
 
     if (!user) {
@@ -19,6 +19,8 @@ const getSettings = async (req, res) => {
       settings: {
         revisionIntervals: user.revisionIntervals || { hard: 1, medium: 3, easy: 5 },
         dailyGoal: user.dailyGoal || 3,
+        notificationEnabled: user.notificationEnabled ?? true,
+        notificationTime: user.notificationTime || '09:00',
       },
     });
   } catch (err) {
@@ -38,7 +40,7 @@ const getSettings = async (req, res) => {
  */
 const updateSettings = async (req, res) => {
   try {
-    const { revisionIntervals, dailyGoal } = req.body;
+    const { revisionIntervals, dailyGoal, notificationEnabled, notificationTime } = req.body;
     const update = {};
 
     // ── Validate dailyGoal ──────────────────────────────────
@@ -75,6 +77,24 @@ const updateSettings = async (req, res) => {
       update.revisionIntervals = { hard: h, medium: m, easy: e };
     }
 
+    // ── Validate notification settings ──────────────────────
+    if (notificationEnabled !== undefined) {
+      if (typeof notificationEnabled === 'string') {
+        update.notificationEnabled = notificationEnabled.toLowerCase() === 'true';
+      } else {
+        update.notificationEnabled = Boolean(notificationEnabled);
+      }
+    }
+
+    if (notificationTime !== undefined) {
+      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(notificationTime)) {
+        return res.status(400).json({
+          message: 'Invalid time format. Use HH:MM (24-hour).',
+        });
+      }
+      update.notificationTime = notificationTime;
+    }
+
     if (Object.keys(update).length === 0) {
       return res.status(400).json({ message: 'No valid settings provided.' });
     }
@@ -82,7 +102,7 @@ const updateSettings = async (req, res) => {
     const user = await User.findByIdAndUpdate(req.user.id, update, {
       new: true,
       runValidators: true,
-    }).select('revisionIntervals dailyGoal');
+    }).select('revisionIntervals dailyGoal notificationEnabled notificationTime');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -93,6 +113,8 @@ const updateSettings = async (req, res) => {
       settings: {
         revisionIntervals: user.revisionIntervals,
         dailyGoal: user.dailyGoal,
+        notificationEnabled: user.notificationEnabled,
+        notificationTime: user.notificationTime,
       },
     });
   } catch (err) {

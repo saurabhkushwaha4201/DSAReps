@@ -25,6 +25,14 @@ const DashboardHome = () => {
         };
 
         fetchData();
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchData();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, []);
 
     const getGreeting = () => {
@@ -79,8 +87,8 @@ const DashboardHome = () => {
 const DashboardSkeleton = () => (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-            <Skeleton className="h-70" />
-            <Skeleton className="h-50" />
+            <Skeleton className="h-72" />
+            <Skeleton className="h-52" />
         </div>
         <div className="space-y-6">
             <Skeleton className="h-60" />

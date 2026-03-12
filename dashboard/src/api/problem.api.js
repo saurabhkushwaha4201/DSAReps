@@ -5,7 +5,12 @@ import api from "./axios";
  * @param {Object} data - { platform, title, url, difficulty, attemptType, notes? }
  */
 export const saveProblem = async (data) => {
-  const res = await api.post('/api/problems', data);
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const res = await api.post('/api/problems', {
+    ...data,
+    timezone,
+    device: 'Web',
+  });
   return res.data;
 };
 
@@ -67,9 +72,11 @@ export const getTodayTasks = async () => {
  * @param {string} rating - FORGOT | SLOW | CLEAN
  */
 export const reviseProblem = async (id, rating) => {
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const res = await api.post(`/api/problems/${id}/revise`, {
     rating,
     device: 'Web',
+    timezone,
   });
   return res.data;
 };
@@ -78,7 +85,10 @@ export const reviseProblem = async (id, rating) => {
  * Fetch dashboard stats (heatmap, weak clusters, streak)
  */
 export const getStats = async () => {
-  const res = await api.get('/api/problems/stats');
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const res = await api.get('/api/problems/stats', {
+    params: { tz: timezone },
+  });
   return res.data;
 };
 

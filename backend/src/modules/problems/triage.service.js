@@ -3,13 +3,14 @@ const Problem = require('./problem.model');
 /**
  * Anti-Avalanche Daily Triage Service — 2-Phase
  *
- * Phase A: Manual overrides due today or earlier (user-pinned problems).
- * Phase B: Algorithmic picks sorted by lowest stabilityScore.
- * Combined result is capped at the user's dailyCap.
+ * Phase A: Manual/pinned overrides due today or earlier are always included
+ *          and can exceed the user's dailyCap/dailyGoal.
+ * Phase B: Algorithmic picks sorted by lowest stabilityScore, trimmed to
+ *          respect the remaining dailyCap slots after overrides are counted.
+ * The returned array may therefore be larger than dailyCap when overrides exist.
  *
- * If a user misses a pinned override on Tuesday, it stays in Phase A
- * on Wednesday because manualOverrideDate is still <= today.
- * Override is only cleared when the user actually rates the problem.
+ * Overrides persist until the user actually rates the problem
+ * (manualOverrideDate is only cleared on a rating call).
  */
 
 /**
@@ -30,19 +31,22 @@ async function getDailyTriage(userId, dailyCap = 3) {
   };
 
   // ── Phase A: Manual overrides due today or earlier ────────
+  // Pinned problems always bypass the daily cap — the user explicitly
+  // requested them, so limiting them would cause frustration.
   const overrides = await Problem.find({
     ...baseFilter,
     isManualOverride: true,
     manualOverrideDate: { $lte: endOfToday, $ne: null },
   })
     .sort({ manualOverrideDate: 1 }) // Earliest override first
-    .limit(dailyCap)
     .lean();
 
   const remainingSlots = dailyCap - overrides.length;
 
   if (remainingSlots <= 0) {
-    return overrides.slice(0, dailyCap);
+    // All slots consumed by pinned problems — still return ALL pinned
+    // (they override the cap), but no algorithmic picks added.
+    return overrides;
   }
 
   // Collect override IDs so we don't duplicate them in Phase B

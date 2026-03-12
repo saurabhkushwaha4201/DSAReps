@@ -17,10 +17,11 @@ const generateToken = (user) => {
  * Create OAuth client per request (IMPORTANT)
  */
 const createOAuthClient = () => {
+  const callbackUrl = process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback';
   return new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    'http://localhost:5000/api/auth/google/callback'
+    callbackUrl
   );
 };
 
@@ -30,6 +31,7 @@ const createOAuthClient = () => {
  */
 const initiateGoogleLogin = (req, res) => {
   const source = req.query.source || 'web';
+  const redirectUri = req.query.redirect_uri || null;
 
   const oauthClient = createOAuthClient();
   console.log('HIT /auth/google');
@@ -40,7 +42,7 @@ const initiateGoogleLogin = (req, res) => {
       'https://www.googleapis.com/auth/userinfo.profile',
       'https://www.googleapis.com/auth/userinfo.email',
     ],
-    state: JSON.stringify({ source }),
+    state: JSON.stringify({ source, redirectUri }),
   });
 
   res.redirect(authorizeUrl);
@@ -96,9 +98,11 @@ const googleCallback = async (req, res) => {
 
     // Parse source safely
     let source = 'web';
+    let redirectUri = null;
     try {
       const parsedState = JSON.parse(state);
       source = parsedState.source || 'web';
+      redirectUri = parsedState.redirectUri || null;
     } catch {
       // ignore invalid state
       console.warn('[Backend] Could not parse state JSON');
@@ -108,10 +112,25 @@ const googleCallback = async (req, res) => {
 
     // Extension flow
     if (source === "extension") {
-      const redirectUrl =
-        `https://${process.env.EXTENSION_ID}.chromiumapp.org/auth?token=${token}`;
+      // Prefer the dynamic redirect_uri sent by the extension (chrome.identity.getRedirectURL)
+      // so the backend doesn't need a hardcoded EXTENSION_ID env var.
+      // Validate it is a chromiumapp.org URL to prevent open-redirect attacks.
+      let finalRedirectBase = `https://${process.env.EXTENSION_ID}.chromiumapp.org/`;
+      if (redirectUri) {
+        try {
+          const parsed = new URL(redirectUri);
+          if (parsed.protocol === 'https:' && parsed.hostname.endsWith('.chromiumapp.org')) {
+            finalRedirectBase = redirectUri;
+          } else {
+            console.warn('[Backend] Untrusted redirect_uri ignored:', redirectUri);
+          }
+        } catch {
+          console.warn('[Backend] Invalid redirect_uri, falling back to env EXTENSION_ID');
+        }
+      }
 
-      return res.redirect(redirectUrl);
+      const sep = finalRedirectBase.includes('?') ? '&' : '?';
+      return res.redirect(`${finalRedirectBase}${sep}token=${token}`);
     }
 
 
@@ -120,14 +139,16 @@ const googleCallback = async (req, res) => {
 
 
     // Default web fallback
+    const webUrl = process.env.DASHBOARD_URL || 'http://localhost:5175';
     console.log('[Backend] Redirecting to Web Login');
     return res.redirect(
-      `http://localhost:5175/login?token=${encodeURIComponent(token)}`
+      `${webUrl}/login?token=${encodeURIComponent(token)}`
     );
   } catch (error) {
     console.error('Google OAuth Callback Error:', error);
+    const webUrl = process.env.DASHBOARD_URL || 'http://localhost:5175';
     return res.redirect(
-      'http://localhost:5175/login?error=auth_failed'
+      `${webUrl}/login?error=auth_failed`
     );
   }
 };

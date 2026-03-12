@@ -1,19 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, List, Target, LogOut, User, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, List, LogOut, User, Moon, Sun, Settings, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../ui/Button';
 import { cn } from '../../utils/cn';
 import { useTheme } from '../../hooks/useTheme';
+import FeedbackModal from '../common/FeedbackModal';
 
 const Sidebar = () => {
     const { user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const [feedbackOpen, setFeedbackOpen] = useState(false);
 
     const navItems = [
         { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
         { label: 'All Problems', icon: List, path: '/problems' },
-        { label: 'Today\'s Focus', icon: Target, path: '/focus' },
+    ];
+
+    const bottomNavItems = [
+        { label: 'Settings', icon: Settings, path: '/settings' },
     ];
 
     return (
@@ -21,9 +26,17 @@ const Sidebar = () => {
             {/* Desktop Sidebar */}
             <aside className="hidden md:flex flex-col w-60 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 h-screen fixed left-0 top-0 z-40 transition-colors">
                 <div className="p-6">
-                    <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 tracking-tight flex items-center gap-2">
-                        <Target className="w-8 h-8" />
-                        DSA Tracker
+                    <h1 className="text-2xl tracking-tight flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none">
+<path d="M12 5L6 16" stroke="#4b5563" strokeWidth="2" strokeLinecap="round"/>
+<path d="M12 5L18 16" stroke="#4b5563" strokeWidth="2" strokeLinecap="round"/>
+<path d="M6 16H18" stroke="#4b5563" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 3"/>
+<path d="M12 5v6" stroke="#4b5563" strokeWidth="2" strokeLinecap="round"/>
+<circle cx="12" cy="5" r="3.5" fill="#3b82f6" className="drop-shadow-[0_0_6px_rgba(59,130,246,0.8)]"/>
+<circle cx="6" cy="16" r="3.5" fill="#10b981" className="drop-shadow-[0_0_6px_rgba(16,185,129,0.8)]"/>
+<circle cx="18" cy="16" r="3.5" fill="#f59e0b" className="drop-shadow-[0_0_6px_rgba(245,158,11,0.8)]"/>
+</svg>
+                        <span className="text-gray-900 dark:text-white font-extrabold tracking-tight">DSA</span><span className="text-indigo-400 font-extrabold tracking-tight">Reps</span>
                     </h1>
                 </div>
 
@@ -44,6 +57,24 @@ const Sidebar = () => {
                         </NavLink>
                     ))}
                 </nav>
+
+                <div className="px-4 pb-2">
+                    {bottomNavItems.map((item) => (
+                        <NavLink
+                            key={item.path}
+                            to={item.path}
+                            className={({ isActive }) => cn(
+                                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                                isActive
+                                    ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
+                                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                            )}
+                        >
+                            <item.icon className="w-5 h-5" />
+                            {item.label}
+                        </NavLink>
+                    ))}
+                </div>
 
                 <div className="p-4 border-t border-slate-200 dark:border-slate-800">
                     <div className="flex items-center gap-3 mb-4 px-2">
@@ -77,12 +108,27 @@ const Sidebar = () => {
                             {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
                     </div>
+
+                    <button
+                        onClick={() => setFeedbackOpen(true)}
+                        className="mt-2 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                    >
+                        <MessageSquare className="w-4 h-4" />
+                        Send Feedback
+                    </button>
                 </div>
             </aside>
 
+            <FeedbackModal
+                isOpen={feedbackOpen}
+                onClose={() => setFeedbackOpen(false)}
+                userName={user?.name || 'User'}
+                userEmail={user?.email || ''}
+            />
+
             {/* Mobile Bottom Nav */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 px-2 py-1 flex justify-around items-center z-50 safe-area-inset-bottom">
-                {navItems.map((item) => (
+                {[...navItems, ...bottomNavItems].map((item) => (
                     <NavLink
                         key={item.path}
                         to={item.path}

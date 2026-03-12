@@ -2,8 +2,13 @@ import AuthService from "./auth.service.js";
 
 console.log("[BG] Service Worker Loaded");
 
-const API_BASE_URL = "http://localhost:5000";
-const DASHBOARD_URL = "http://localhost:5175";
+// In production builds, replace these with your deployed URLs via your bundler's
+// define/env plugin (e.g. esbuild --define:PROD_API_URL='"https://api.example.com"').
+// During local dev they fall back to localhost.
+const API_BASE_URL =
+  typeof PROD_API_URL !== "undefined" ? PROD_API_URL : "http://localhost:5000";
+const DASHBOARD_URL =
+  typeof PROD_DASHBOARD_URL !== "undefined" ? PROD_DASHBOARD_URL : "http://localhost:5175";
 
 /* ===============================
    BADGE MANAGEMENT
@@ -54,14 +59,106 @@ async function fetchAndUpdateBadge() {
 
 chrome.alarms.create("refreshTasks", { periodInMinutes: 120 });
 
-chrome.alarms.onAlarm.addListener((alarm) => {
+chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "refreshTasks") {
     fetchAndUpdateBadge();
+    scheduleDigestAlarm(); // Re-read settings in case they changed
+  }
+  if (alarm.name === "dailyDigest") {
+    fireDailyDigest();
   }
 });
 
-// Also refresh on service worker startup
+// Refresh badge and set up digest alarm on service worker startup
 fetchAndUpdateBadge();
+scheduleDigestAlarm();
+
+/* ===============================
+   DAILY DIGEST NOTIFICATIONS
+================================ */
+
+async function scheduleDigestAlarm(enabled, time) {
+  await chrome.alarms.clear("dailyDigest");
+
+  // If values are passed directly (from UPDATE_ALARM), use them.
+  // Otherwise, fetch from API.
+  let notifEnabled = enabled;
+  let notifTime = time;
+
+  if (notifEnabled === undefined) {
+    try {
+      const isAuth = await AuthService.isAuthenticated();
+      if (!isAuth) return;
+      const data = await apiFetch("/api/user/settings");
+      notifEnabled = data.settings.notificationEnabled;
+      notifTime = data.settings.notificationTime || "09:00";
+    } catch (err) {
+      console.warn("[BG] scheduleDigestAlarm fetch failed:", err.message);
+      return;
+    }
+  }
+
+  if (!notifEnabled) {
+    console.log("[BG] Notifications disabled, alarm cleared.");
+    return;
+  }
+
+  const [hours, minutes] = (notifTime || "09:00").split(":").map(Number);
+  const now = new Date();
+  const target = new Date();
+  target.setHours(hours, minutes, 0, 0);
+
+  // If today's slot has already passed, aim for tomorrow
+  if (target <= now) {
+    target.setDate(target.getDate() + 1);
+  }
+
+  chrome.alarms.create("dailyDigest", {
+    when: target.getTime(),
+    periodInMinutes: 1440,
+  });
+
+  console.log(`[BG] Daily digest alarm set for ${target.toLocaleTimeString()}`);
+}
+
+function getDynamicGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good Morning";
+  if (hour < 18) return "Good Afternoon";
+  return "Good Evening";
+}
+
+async function fireDailyDigest() {
+  try {
+    const isAuth = await AuthService.isAuthenticated();
+    if (!isAuth) return;
+
+    const data = await apiFetch("/api/problems/today");
+    const count = data?.problems?.length || 0;
+
+    if (count === 0) return; // Nothing due — stay silent
+
+    const greeting = getDynamicGreeting();
+
+    chrome.notifications.create("dailyDigest", {
+      type: "basic",
+      iconUrl: "icons/icon128.png",
+      title: `${greeting}! Ready to code? 💻`,
+      message: `We've queued up ${count} problem${count !== 1 ? "s" : ""} for you to review today. Let's get it done!`,
+      priority: 1,
+    });
+  } catch (err) {
+    console.warn("[BG] fireDailyDigest failed:", err.message);
+  }
+}
+
+// Open Today's Focus page when user clicks the notification
+chrome.notifications.onClicked.addListener((notificationId) => {
+  if (notificationId === "dailyDigest") {
+    chrome.tabs.create({ url: `${DASHBOARD_URL}/dashboard` });
+    chrome.notifications.clear(notificationId);
+  }
+});
 
 /* ===============================
    MESSAGE LISTENERS
@@ -79,7 +176,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // Handle login
   if (message.type === "AUTH_LOGIN") {
-    const authUrl = `${API_BASE_URL}/api/auth/google?source=extension`;
+    // getRedirectURL() returns the exact https://<id>.chromiumapp.org/ URL for this
+    // extension build — avoids relying on a hardcoded EXTENSION_ID env var in the backend.
+    const redirectUri = chrome.identity.getRedirectURL();
+    const authUrl = `${API_BASE_URL}/api/auth/google?source=extension&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
     chrome.identity.launchWebAuthFlow(
       { url: authUrl, interactive: true },
@@ -127,13 +227,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       body: JSON.stringify(message.data),
     })
       .then((res) => {
-        // Refresh badge after saving a new problem
         fetchAndUpdateBadge();
         sendResponse(res);
       })
       .catch((err) => {
         console.error("[BG] Save problem error:", err);
         sendResponse({ error: err.message || "SAVE_FAILED" });
+      });
+    return true;
+  }
+
+  // Handle problem delete (called when user unsaves via bookmark icon)
+  if (message.type === "REMOVE_PROBLEM") {
+    const { dbId } = message.data;
+    apiFetch(`/api/problems/${dbId}`, { method: "DELETE" })
+      .then((res) => {
+        fetchAndUpdateBadge();
+        sendResponse(res);
+      })
+      .catch((err) => {
+        console.error("[BG] Remove problem error:", err);
+        sendResponse({ error: err.message || "REMOVE_FAILED" });
       });
     return true;
   }
@@ -168,6 +282,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch((err) => {
         console.error("[BG] Rate problem error:", err);
         sendResponse({ error: err.message || "RATE_FAILED" });
+      });
+    return true;
+  }
+
+  // ── Instantly reschedule digest alarm when user saves settings ──
+  if (message.type === "UPDATE_ALARM") {
+    scheduleDigestAlarm(message.notifEnabled, message.notifTime);
+    sendResponse({ success: true });
+    return true;
+  }
+
+  // ── Check if a specific URL is already saved in the backend ──
+  if (message.type === "CHECK_PROBLEM_BY_URL") {
+    const { url } = message.data;
+    apiFetch(`/api/problems?url=${encodeURIComponent(url)}&limit=1`)
+      .then((data) => {
+        const problem = data?.problems?.[0] || null;
+        sendResponse({ saved: !!problem, problem });
+      })
+      .catch(() => sendResponse({ saved: false, problem: null }));
+    return true;
+  }
+
+  // ── Fetch user's revision intervals so popup/content can show correct labels ──
+  if (message.type === "GET_INTERVALS") {
+    apiFetch("/api/user/settings")
+      .then((data) => {
+        const intervals = data?.settings?.revisionIntervals || { hard: 1, medium: 3, easy: 5 };
+        sendResponse({ intervals });
+      })
+      .catch(() => {
+        sendResponse({ intervals: { hard: 1, medium: 3, easy: 5 } });
       });
     return true;
   }

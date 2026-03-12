@@ -5,49 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DSA Tracker Extension</title>
     <style>
-        :root {
-            --bg-body: #f8fafc;
-            --bg-card: #ffffff;
-            --text-primary: #0f172a;
-            --text-secondary: #64748b;
-            --primary: #4f46e5; /* Indigo-600 */
-            --primary-hover: #4338ca; /* Indigo-700 */
-            --surface-border: #e2e8f0;
-            --input-bg: #f8fafc;
-            --success: #10b981;
-            --error: #ef4444;
-            --radius: 12px;
-            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        }
-
-        /* Dark Mode Support (Optional - matches system preference) */
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-body: #0f172a;
-                --bg-card: #1e293b;
-                --text-primary: #f8fafc;
-                --text-secondary: #94a3b8;
-                --primary: #6366f1; /* Indigo-500 */
-                --primary-hover: #818cf8;
-                --surface-border: #334155;
-                --input-bg: #0f172a;
-            }
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-primary);
-            margin: 0;
-            width: 350px; /* Slightly wider for better layout */
-            min-height: 450px;
+            background-color: #0d1117;
+            color: #e2e8f0;
+            width: 360px;
+            min-height: 420px;
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
         }
 
         .container {
-            padding: 1.25rem;
+            padding: 1.1rem 1.25rem;
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -58,178 +30,210 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--surface-border);
+            padding-bottom: 0.9rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
             margin-bottom: 1rem;
         }
 
         .brand {
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.95rem;
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: var(--primary);
+            gap: 7px;
+            color: #818cf8;
+        }
+
+        .brand-dot {
+            width: 16px; height: 16px;
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            border-radius: 4px;
         }
 
         .link-icon {
-            color: var(--text-secondary);
+            color: #64748b;
             text-decoration: none;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
             transition: color 0.2s;
             cursor: pointer;
+            background: none;
+            border: none;
+            font-family: inherit;
         }
-
-        .link-icon:hover {
-            color: var(--primary);
-        }
+        .link-icon:hover { color: #818cf8; }
 
         /* --- Typography --- */
-        h2 { font-size: 1.25rem; margin: 0 0 0.5rem 0; font-weight: 600; }
-        h3 { font-size: 1rem; margin: 0; font-weight: 600; }
-        p { margin: 0 0 1rem 0; color: var(--text-secondary); font-size: 0.875rem; line-height: 1.5; }
+        h2 { font-size: 1.15rem; font-weight: 700; color: #f1f5f9; margin-bottom: 0.3rem; }
+        h3 { font-size: 0.95rem; font-weight: 600; color: #f1f5f9; }
+        p  { color: #64748b; font-size: 0.82rem; line-height: 1.55; margin-top: 0.25rem; }
 
         /* --- Utilities --- */
         .hidden { display: none !important; }
-        .flex-center { display: flex; align-items: center; justify-content: center; }
         .flex-between { display: flex; align-items: center; justify-content: space-between; }
-        .mt-4 { margin-top: 1rem; }
-        .w-full { width: 100%; }
+        .mt-3 { margin-top: 0.75rem; }
 
-        /* --- Forms & Inputs --- */
-        .input-group { margin-bottom: 1rem; }
-        
-        label {
+        /* --- Field label --- */
+        .field-label {
             display: block;
-            margin-bottom: 0.35rem;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
+            letter-spacing: 0.06em;
+            color: #475569;
+            margin-bottom: 0.4rem;
         }
 
-        input, select, textarea {
+        .input-group { margin-bottom: 0.85rem; }
+
+        /* --- Text inputs --- */
+        input[type="text"], input[type="url"], input[type="number"], textarea {
             width: 100%;
-            padding: 0.6rem 0.75rem;
-            background-color: var(--input-bg);
-            border: 1px solid var(--surface-border);
+            padding: 0.55rem 0.75rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             border-radius: 8px;
-            color: var(--text-primary);
+            color: #e2e8f0;
             font-family: inherit;
-            font-size: 0.9rem;
-            box-sizing: border-box;
+            font-size: 0.85rem;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
-
-        input:focus, select:focus, textarea:focus {
+        input[type="text"]::placeholder,
+        input[type="url"]::placeholder,
+        input[type="number"]::placeholder,
+        textarea::placeholder { color: #334155; }
+        input[type="text"]:focus,
+        input[type="url"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); /* Subtle Indigo Ring */
+            border-color: rgba(99,102,241,0.5);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
         }
+        textarea { resize: none; min-height: 68px; }
 
-        textarea { resize: vertical; min-height: 80px; }
+        /* Keep selects hidden — JS reads from them, UI uses button groups */
+        select { display: none !important; }
 
-        /* --- Buttons --- */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.75rem 1rem;
+        /* --- Button groups (difficulty / status) --- */
+        .btn-group { display: flex; gap: 0.4rem; }
+
+        .btn-group-item {
+            flex: 1;
+            padding: 0.45rem 0.5rem;
             border-radius: 8px;
-            border: none;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: #64748b;
+            font-size: 0.75rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.9rem;
-            width: 100%;
-            gap: 8px;
+            text-align: center;
+            transition: all 0.15s;
+            font-family: inherit;
+            line-height: 1.3;
+        }
+        .btn-group-item:hover { border-color: rgba(255,255,255,0.15); color: #94a3b8; }
+
+        /* Difficulty active states */
+        .btn-group-item.diff-hard.active  { background: rgba(239,68,68,0.12);  border-color: rgba(239,68,68,0.4);  color: #f87171; }
+        .btn-group-item.diff-medium.active{ background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.4); color: #fbbf24; }
+        .btn-group-item.diff-easy.active  { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); color: #34d399; }
+
+        /* Status active states */
+        .btn-group-item.stat-solved.active  { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.5); color: #a5b4fc; }
+        .btn-group-item.stat-partial.active { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.4); color: #fbbf24; }
+        .btn-group-item.stat-watched.active { background: rgba(100,116,139,0.15); border-color: rgba(100,116,139,0.4); color: #94a3b8; }
+
+        /* --- Primary action button --- */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0.65rem 1rem;
+            border-radius: 10px; border: none;
+            font-weight: 600; cursor: pointer;
+            transition: all 0.2s; font-size: 0.875rem;
+            width: 100%; gap: 7px; font-family: inherit;
         }
 
         .btn-primary {
-            background-color: var(--primary);
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
             color: white;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            box-shadow: 0 0 16px rgba(99,102,241,0.35);
         }
-
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
-        }
-        
+        .btn-primary:hover { box-shadow: 0 0 22px rgba(99,102,241,0.55); transform: translateY(-1px); }
         .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
         .btn-outline {
-            background: transparent;
-            border: 1px solid var(--surface-border);
-            color: var(--text-secondary);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #64748b;
         }
+        .btn-outline:hover { border-color: rgba(255,255,255,0.15); color: #94a3b8; }
 
-        .btn-outline:hover {
-            border-color: var(--text-primary);
-            color: var(--text-primary);
-            background-color: var(--bg-card);
-        }
-
-        /* --- Problem Header --- */
+        /* --- Problem header card --- */
         .problem-card-header {
-            background-color: var(--bg-card);
-            border: 1px solid var(--surface-border);
-            padding: 0.75rem;
-            border-radius: var(--radius);
-            margin-bottom: 1.25rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            padding: 0.65rem 0.85rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
         }
 
         .platform-badge {
-            font-size: 0.7rem;
-            background-color: var(--surface-border);
+            font-size: 0.65rem;
+            background: rgba(99,102,241,0.15);
+            border: 1px solid rgba(99,102,241,0.3);
             padding: 2px 8px;
             border-radius: 99px;
-            color: var(--text-secondary);
-            font-weight: 500;
+            color: #a5b4fc;
+            font-weight: 600;
         }
 
         /* --- States --- */
         .state-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            text-align: center;
-            animation: fadeIn 0.3s ease-out;
+            flex: 1; display: flex; flex-direction: column;
+            justify-content: center; text-align: center;
+            animation: fadeIn 0.25s ease-out;
         }
 
+        .state-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         /* --- Spinner --- */
         .spinner {
-            width: 32px;
-            height: 32px;
-            border: 3px solid var(--surface-border);
+            width: 28px; height: 28px;
+            border: 2.5px solid rgba(255,255,255,0.06);
             border-radius: 50%;
-            border-top-color: var(--primary);
+            border-top-color: #6366f1;
             animation: spin 0.8s linear infinite;
-            margin: 0 auto 1rem auto;
+            margin: 0 auto 0.85rem;
         }
-
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Icon Helper (Mocking SVG via text or simple shape) */
-        .icon-mock {
-            width: 20px;
-            height: 20px;
-            display: inline-block;
-            background: currentColor;
-            mask-size: contain;
-            -webkit-mask-size: contain;
-            mask-repeat: no-repeat;
-            -webkit-mask-repeat: no-repeat;
+        /* --- Duplicate / info msg --- */
+        #duplicate-msg {
+            font-size: 0.78rem;
+            color: #34d399;
+            text-align: center;
+            background: rgba(16,185,129,0.08);
+            border: 1px solid rgba(16,185,129,0.15);
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            margin-top: 0.6rem;
+        }
+
+        /* --- Manual form platform badge override --- */
+        .badge-manual {
+            background: rgba(99,102,241,0.2) !important;
+            border: 1px solid rgba(99,102,241,0.35) !important;
+            color: #a5b4fc !important;
         }
     </style>
 </head>
@@ -238,61 +242,61 @@
     <div class="container">
         <header id="app-header" class="app-header hidden">
             <div class="brand">
-                <div style="width: 18px; height: 18px; background: var(--primary); border-radius: 4px;"></div>
+                <div class="brand-dot"></div>
                 DSA Tracker
             </div>
             <a id="link-dashboard" class="link-icon" href="#" title="Open Full Dashboard">
-                Dashboard &nearr;
+                Dashboard ↗
             </a>
         </header>
 
+        <!-- LOADING -->
         <div id="state-loading" class="state-container">
             <div class="spinner"></div>
-            <h3>Detecting Context...</h3>
-            <p id="loading-text">Analyzing current page</p>
+            <h3 style="color:#94a3b8; font-weight:500;">Detecting context…</h3>
+            <p id="loading-text" style="margin-top:0.3rem;">Analyzing current page</p>
         </div>
 
+        <!-- AUTH -->
         <div id="state-auth" class="state-container hidden">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🔐</div>
+            <div class="state-icon">🔐</div>
             <h2>Login Required</h2>
-            <p>Connect your account to start saving problems and tracking your progress.</p>
+            <p style="margin: 0.4rem 0 1.25rem;">Connect your account to start saving problems and tracking your progress.</p>
             <button id="btn-login" class="btn btn-primary">Sign In with Google</button>
         </div>
 
+        <!-- UNSUPPORTED -->
         <div id="state-unsupported" class="state-container hidden">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🧩</div>
+            <div class="state-icon">🧩</div>
             <h2>No Problem Found</h2>
-            <p>Navigate to a <b>LeetCode</b>, <b>Codeforces</b>, <b>CSES</b>, or <b>GFG</b> problem page to auto-detect.</p>
-            <div style="display: grid; gap: 0.5rem; width: 100%;">
+            <p style="margin: 0.4rem 0 1.25rem;">Navigate to a <strong style="color:#94a3b8;">LeetCode</strong>, <strong style="color:#94a3b8;">Codeforces</strong>, <strong style="color:#94a3b8;">CSES</strong>, or <strong style="color:#94a3b8;">GFG</strong> problem page to auto-detect.</p>
+            <div style="display:grid; gap:0.5rem; width:100%;">
                 <button id="btn-open-lc" class="btn btn-outline">Go to LeetCode</button>
-                <button id="btn-manual-track" class="btn btn-primary" style="font-size: 0.85rem;">+ Track Manually</button>
+                <button id="btn-manual-track" class="btn btn-primary" style="font-size:0.82rem;">+ Track Manually</button>
             </div>
         </div>
 
+        <!-- MANUAL ENTRY -->
         <div id="state-manual" class="hidden">
             <div class="problem-card-header">
                 <div class="flex-between">
-                    <span class="platform-badge" style="background: var(--primary); color: white;">Manual Entry</span>
-                    <button id="btn-back-manual" class="link-icon" style="background:none; border:none; padding:0; cursor:pointer;">
-                        &larr; Back
-                    </button>
+                    <span class="platform-badge badge-manual">Manual Entry</span>
+                    <button id="btn-back-manual" class="link-icon">← Back</button>
                 </div>
             </div>
 
             <form id="manual-form">
                 <div class="input-group">
-                    <label>Problem URL <span style="color: var(--error);">*</span></label>
+                    <label class="field-label">Problem URL <span style="color:#ef4444;">*</span></label>
                     <input type="url" id="manual-url" placeholder="https://leetcode.com/problems/two-sum/" required>
                 </div>
-
                 <div class="input-group">
-                    <label>Title <span style="color: var(--error);">*</span></label>
+                    <label class="field-label">Title <span style="color:#ef4444;">*</span></label>
                     <input type="text" id="manual-title" placeholder="Two Sum" required>
                 </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="input-group">
-                        <label>Platform</label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.85rem;">
+                    <div>
+                        <label class="field-label">Platform</label>
                         <select id="manual-platform">
                             <option value="leetcode">LeetCode</option>
                             <option value="codeforces">Codeforces</option>
@@ -300,97 +304,148 @@
                             <option value="gfg">GFG</option>
                             <option value="other">Other</option>
                         </select>
+                        <!-- visible platform buttons -->
+                        <div class="btn-group" id="manual-platform-group">
+                            <button type="button" class="btn-group-item stat-solved active" data-platform="leetcode">LC</button>
+                            <button type="button" class="btn-group-item stat-partial" data-platform="codeforces">CF</button>
+                            <button type="button" class="btn-group-item stat-watched" data-platform="gfg">GFG</button>
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <label>Difficulty</label>
+                    <div>
+                        <label class="field-label">Difficulty</label>
                         <select id="manual-difficulty">
-                            <option value="easy">🟢 Easy</option>
-                            <option value="medium" selected>🟡 Medium</option>
-                            <option value="hard">🔴 Hard</option>
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
                         </select>
+                        <div class="btn-group" id="manual-diff-group">
+                            <button type="button" class="btn-group-item diff-hard" data-diff="hard">Hard</button>
+                            <button type="button" class="btn-group-item diff-medium active" data-diff="medium">Mid</button>
+                            <button type="button" class="btn-group-item diff-easy" data-diff="easy">Easy</button>
+                        </div>
                     </div>
                 </div>
-
                 <div class="input-group">
-                    <label>Quick Notes</label>
-                    <textarea id="manual-notes" placeholder="Key patterns, approach..." rows="2"></textarea>
+                    <label class="field-label">Quick Notes</label>
+                    <textarea id="manual-notes" placeholder="Key patterns, approach…" rows="2"></textarea>
                 </div>
-
-                <button type="submit" id="btn-manual-save" class="btn btn-primary mt-4">
-                    Track Problem
-                </button>
+                <button type="submit" id="btn-manual-save" class="btn btn-primary mt-3">Track Problem</button>
             </form>
         </div>
 
+        <!-- MAIN FORM -->
         <div id="state-form" class="hidden">
             <div class="problem-card-header">
                 <div class="flex-between">
                     <span id="platform-badge" class="platform-badge">LeetCode</span>
-                    <button id="btn-logout-small" class="link-icon" style="background:none; border:none; padding:0;">
-                        Logout
-                    </button>
+                    <button id="btn-logout-small" class="link-icon">Logout</button>
                 </div>
-                <h3 id="problem-title" class="mt-2" style="color: var(--primary);">Two Sum</h3>
+                <h3 id="problem-title" style="margin-top:0.45rem; color:#a5b4fc; font-size:0.88rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Two Sum</h3>
             </div>
 
             <form id="save-form">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="input-group">
-                        <label>Difficulty</label>
-                        <select id="difficulty">
-                            <option value="Easy">🟢 Easy</option>
-                            <option value="Medium" selected>🟡 Medium</option>
-                            <option value="Hard">🔴 Hard</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Status</label>
-                        <select id="attempt-type">
-                            <option value="solved">✅ Solved</option>
-                            <option value="partial">🚧 Partial</option>
-                            <option value="watched">👀 Watched</option>
-                        </select>
+                <!-- Difficulty -->
+                <div class="input-group">
+                    <label class="field-label">Difficulty</label>
+                    <!-- hidden select — popup.js reads/sets this -->
+                    <select id="difficulty">
+                        <option value="Easy">Easy</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+                    <div class="btn-group" id="difficulty-group">
+                        <button type="button" class="btn-group-item diff-hard"   data-val="Hard">Hard<br><span style="font-weight:400;opacity:0.7;font-size:0.65rem;">Review in 1d</span></button>
+                        <button type="button" class="btn-group-item diff-medium active" data-val="Medium">Medium<br><span style="font-weight:400;opacity:0.7;font-size:0.65rem;">Review in 3d</span></button>
+                        <button type="button" class="btn-group-item diff-easy"   data-val="Easy">Easy<br><span style="font-weight:400;opacity:0.7;font-size:0.65rem;">Review in 5d</span></button>
                     </div>
                 </div>
 
+                <!-- Notes -->
                 <div class="input-group">
-                    <label>Time Spent (Minutes)</label>
-                    <input type="number" id="time-spent" placeholder="e.g. 25" min="0">
+                    <label class="field-label">Core trick / notes</label>
+                    <textarea id="notes" placeholder="e.g. Two-pointer with sorted array…"></textarea>
                 </div>
 
-                <div class="input-group">
-                    <label>Quick Notes / Tags</label>
-                    <textarea id="notes" placeholder="e.g. Used HashMap, O(n) time..."></textarea>
-                </div>
-
-                <button type="submit" id="btn-save" class="btn btn-primary mt-4">
-                    Track Problem
-                </button>
-                
-                <div id="duplicate-msg" class="hidden mt-2" style="font-size: 0.8rem; color: var(--success); text-align: center; background: #ecfdf5; padding: 0.5rem; border-radius: 6px;">
-                    ✨ Update existing entry
-                </div>
+                <button type="submit" id="btn-save" class="btn btn-primary">Track Problem</button>
+                <div id="duplicate-msg" class="hidden">✨ Already saved — will update entry</div>
             </form>
         </div>
 
+        <!-- SUCCESS -->
         <div id="state-success" class="state-container hidden">
-            <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
-            <h2 style="color: var(--success)">Saved Successfully!</h2>
-            <p>Problem saved to your tracker!</p>
-            <div style="display: grid; gap: 0.5rem; width: 100%;">
-                <button id="btn-close" class="btn btn-outline">Close Popup</button>
-            </div>
+            <div class="state-icon">🎉</div>
+            <h2 style="color:#34d399;">Saved Successfully!</h2>
+            <p style="margin: 0.4rem 0 1.25rem;">Problem saved to your tracker.</p>
+            <button id="btn-close" class="btn btn-outline">Close</button>
         </div>
 
+        <!-- ERROR -->
         <div id="state-error" class="state-container hidden">
-            <div style="font-size: 3rem; margin-bottom: 0.5rem;">⚠️</div>
-            <h2 style="color: var(--error)">Save Failed</h2>
-            <p id="error-msg">Network error occurred.</p>
+            <div class="state-icon">⚠️</div>
+            <h2 style="color:#f87171;">Save Failed</h2>
+            <p id="error-msg" style="margin: 0.4rem 0 1.25rem;">Network error occurred.</p>
             <button id="btn-retry" class="btn btn-outline">Try Again</button>
         </div>
-
     </div>
 
+    <script>
+        // Button-group sync helper — keeps hidden <select> in sync so popup.js works unchanged
+        function initBtnGroup(groupId, selectId, activeClass) {
+            const group = document.getElementById(groupId);
+            const select = document.getElementById(selectId);
+            if (!group || !select) return;
+
+            group.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-val]');
+                if (!btn) return;
+                group.querySelectorAll('.btn-group-item').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                select.value = btn.dataset.val;
+            });
+
+            // Reflect when popup.js sets select.value programmatically (e.g. renderForm sets Medium)
+            const orig = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+            Object.defineProperty(select, 'value', {
+                get() { return orig.get.call(this); },
+                set(v) {
+                    orig.set.call(this, v);
+                    group.querySelectorAll('.btn-group-item').forEach(b => {
+                        b.classList.toggle('active', b.dataset.val === v);
+                    });
+                }
+            });
+        }
+
+        // Manual difficulty group
+        (function() {
+            const group = document.getElementById('manual-diff-group');
+            const select = document.getElementById('manual-difficulty');
+            if (!group || !select) return;
+            group.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-diff]');
+                if (!btn) return;
+                group.querySelectorAll('.btn-group-item').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                select.value = btn.dataset.diff;
+            });
+        })();
+
+        // Manual platform group
+        (function() {
+            const group = document.getElementById('manual-platform-group');
+            const select = document.getElementById('manual-platform');
+            if (!group || !select) return;
+            group.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-platform]');
+                if (!btn) return;
+                group.querySelectorAll('.btn-group-item').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                select.value = btn.dataset.platform;
+            });
+        })();
+
+        initBtnGroup('difficulty-group', 'difficulty');
+    </script>
     <script src="popup.js" type="module"></script>
 </body>
 </html>

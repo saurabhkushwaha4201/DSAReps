@@ -39,7 +39,7 @@ const problemSchema = new mongoose.Schema(
     attemptType: {
       type: String,
       enum: ['solved', 'partial', 'watched'],
-      required: true,
+      default: 'solved',
     },
 
     status: {
