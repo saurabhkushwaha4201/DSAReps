@@ -21,7 +21,7 @@ const revisionLogSchema = new mongoose.Schema(
         },
         rating: {
             type: String,
-            enum: ['AGAIN', 'HARD', 'GOOD', 'EASY', 'FORGOT', 'SLOW', 'CLEAN'],
+            enum: ['AGAIN', 'HARD', 'GOOD', 'EASY', 'FORGOT', 'SLOW', 'CLEAN', 'INITIAL'],
             required: true,
         },
         timeTaken: {
@@ -40,6 +40,7 @@ const revisionLogSchema = new mongoose.Schema(
 );
 
 // Indexes for analytics
-revisionLogSchema.index({ userId: 1, reviewedAt: 1 }); // For activity over time/streaks
+revisionLogSchema.index({ userId: 1, reviewedAt: 1 });
+revisionLogSchema.index({ userId: 1, createdAt: 1 });
 
 module.exports = mongoose.model('RevisionLog', revisionLogSchema);

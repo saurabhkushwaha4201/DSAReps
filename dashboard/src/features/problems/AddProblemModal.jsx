@@ -24,7 +24,6 @@ function detectPlatform(url) {
 }
 
 const DIFFICULTIES = ['easy', 'medium', 'hard'];
-const ATTEMPT_TYPES = ['fresh', 'retry', 'revision'];
 
 export default function AddProblemModal({ isOpen, onClose, onAdded }) {
   const [form, setForm] = useState({
@@ -32,7 +31,6 @@ export default function AddProblemModal({ isOpen, onClose, onAdded }) {
     title: '',
     platform: 'leetcode',
     difficulty: 'medium',
-    attemptType: 'fresh',
     notes: '',
   });
   const [saving, setSaving] = useState(false);
@@ -63,7 +61,6 @@ export default function AddProblemModal({ isOpen, onClose, onAdded }) {
         title: form.title.trim(),
         platform: form.platform,
         difficulty: form.difficulty,
-        attemptType: form.attemptType,
         notes: form.notes.trim(),
       });
 
@@ -75,7 +72,7 @@ export default function AddProblemModal({ isOpen, onClose, onAdded }) {
 
       onAdded?.();
       onClose();
-      setForm({ url: '', title: '', platform: 'leetcode', difficulty: 'medium', attemptType: 'fresh', notes: '' });
+      setForm({ url: '', title: '', platform: 'leetcode', difficulty: 'medium', notes: '' });
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to save problem');
     } finally {
@@ -169,27 +166,6 @@ export default function AddProblemModal({ isOpen, onClose, onAdded }) {
                   </button>
                 ))}
               </div>
-            </div>
-          </div>
-
-          {/* Attempt Type */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Attempt Type</label>
-            <div className="flex gap-2">
-              {ATTEMPT_TYPES.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => handleChange('attemptType', t)}
-                  className={`flex-1 py-2 text-xs font-medium rounded-lg border transition-colors ${
-                    form.attemptType === t
-                      ? 'bg-indigo-100 border-indigo-400 text-indigo-700 dark:bg-indigo-900/30 dark:border-indigo-600 dark:text-indigo-400'
-                      : 'border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
-                </button>
-              ))}
             </div>
           </div>
 
