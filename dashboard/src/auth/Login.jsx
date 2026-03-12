@@ -3,7 +3,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from './AuthContext';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import sendTokenToExtension from '../utils/sendToken';
 
 export default function Login() {
@@ -13,7 +13,7 @@ export default function Login() {
 
     // Redirect if already logged in
     if (isAuthenticated) {
-        return <Navigate to="/dashboard/today" replace />;
+        return <Navigate to="/" replace />;
     }
 
     const handleSuccess = async (credentialResponse) => {
@@ -33,12 +33,7 @@ export default function Login() {
                 console.error("TOKEN NOT FOUND IN LOCALSTORAGE");
             }
             // UX: Update toast on success
-            toast.update(loadToast, {
-                render: "Success! Welcome back.",
-                type: "success",
-                isLoading: false,
-                autoClose: 2000
-            });
+            toast.success("Success! Welcome back.", { id: loadToast });
             window.postMessage(
                 {
                     source: "DSA_DASHBOARD",
@@ -47,16 +42,11 @@ export default function Login() {
                 },
                 "*"
             );
-            navigate('/dashboard/today');
+            navigate('/');
         } catch (error) {
             console.error('Login Failed', error);
             // UX: Update toast on error
-            toast.update(loadToast, {
-                render: "Authentication failed. Please try again.",
-                type: "error",
-                isLoading: false,
-                autoClose: 3000
-            });
+            toast.error("Authentication failed. Please try again.", { id: loadToast });
             setIsLoggingIn(false);
         }
     };

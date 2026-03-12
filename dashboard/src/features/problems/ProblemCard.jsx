@@ -3,7 +3,6 @@ import { Archive, RotateCcw, ExternalLink, CheckCircle, StickyNote, Pin } from '
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
-import { useLocalData } from '../../hooks/useLocalData';
 import { rescheduleProblem } from '../../api/problem.api';
 import { ReschedulePopover } from './ReschedulePopover';
 import { format, isToday, isPast } from 'date-fns';
@@ -31,7 +30,6 @@ function PlatformBadge({ platform }) {
 
 export default function ProblemCard({ problem, onMarkRevised, onArchive, onRestore, onOpenNotes, onReschedule }) {
     const isOnline = useOnlineStatus();
-    const { getProblemNote } = useLocalData();
     const [showPopover, setShowPopover] = useState(false);
     const [rescheduling, setRescheduling] = useState(false);
     const calBtnRef = useRef(null);
@@ -39,7 +37,8 @@ export default function ProblemCard({ problem, onMarkRevised, onArchive, onResto
     // Normalization
     const id = problem._id || problem.id;
     const isArchived = problem.status === 'archived';
-    const hasNotes = !!getProblemNote(id);
+    // Use the server-side notes field instead of localStorage for accurate indicator
+    const hasNotes = !!(problem.notes && problem.notes.trim());
     const isPinned = problem.isManualOverride;
 
     const today = new Date().toISOString().split('T')[0];
