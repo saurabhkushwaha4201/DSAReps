@@ -37,8 +37,10 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem("token");
+    // Let ProtectedRoute handle the client-side redirect to /login.
+    // Avoid a hard browser navigation because Vercel will 404 on /login
+    // without an SPA rewrite rule.
     setToken(null);
-    window.location.href = '/login'; // Hard redirect to clear any state
   };
 
   const isAuthenticated = Boolean(token);
