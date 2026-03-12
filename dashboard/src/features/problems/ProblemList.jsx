@@ -348,28 +348,47 @@ export default function ProblemList() {
 
             {/* Rating Picker Modal */}
             {ratingTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setRatingTarget(null)}>
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-6 w-80 mx-4" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1">How did it go?</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 truncate">{ratingTarget.title}</p>
-                        <div className="grid grid-cols-3 gap-2">
-                            <button onClick={() => handleRatingSubmit('CLEAN')} className="flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors">
-                                <span className="text-lg">✅</span>
-                                <span className="text-xs font-semibold">Clean</span>
-                                <span className="text-[10px] text-emerald-600 dark:text-emerald-500">Got it</span>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setRatingTarget(null)}>
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 w-[420px] mx-4" onClick={e => e.stopPropagation()}>
+                        <div className="text-center mb-6">
+                            <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                <span className="text-2xl">🧠</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">How did it go?</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-xs mx-auto">{ratingTarget.title}</p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            <button
+                                onClick={() => handleRatingSubmit('CLEAN')}
+                                className="cursor-pointer flex flex-col items-center gap-2 p-5 rounded-2xl border-2 border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95 transition-all duration-150"
+                            >
+                                <span className="text-3xl">✅</span>
+                                <span className="text-sm font-bold">Clean</span>
+                                <span className="text-xs text-emerald-600 dark:text-emerald-500 font-medium">Got it</span>
                             </button>
-                            <button onClick={() => handleRatingSubmit('SLOW')} className="flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors">
-                                <span className="text-lg">🐢</span>
-                                <span className="text-xs font-semibold">Slow</span>
-                                <span className="text-[10px] text-amber-600 dark:text-amber-500">Struggled</span>
+                            <button
+                                onClick={() => handleRatingSubmit('SLOW')}
+                                className="cursor-pointer flex flex-col items-center gap-2 p-5 rounded-2xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:scale-105 hover:shadow-lg hover:shadow-amber-500/20 active:scale-95 transition-all duration-150"
+                            >
+                                <span className="text-3xl">🐢</span>
+                                <span className="text-sm font-bold">Slow</span>
+                                <span className="text-xs text-amber-600 dark:text-amber-500 font-medium">Struggled</span>
                             </button>
-                            <button onClick={() => handleRatingSubmit('FORGOT')} className="flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-red-400 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
-                                <span className="text-lg">❌</span>
-                                <span className="text-xs font-semibold">Forgot</span>
-                                <span className="text-[10px] text-red-600 dark:text-red-500">Blanked</span>
+                            <button
+                                onClick={() => handleRatingSubmit('FORGOT')}
+                                className="cursor-pointer flex flex-col items-center gap-2 p-5 rounded-2xl border-2 border-red-400 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 hover:scale-105 hover:shadow-lg hover:shadow-red-500/20 active:scale-95 transition-all duration-150"
+                            >
+                                <span className="text-3xl">❌</span>
+                                <span className="text-sm font-bold">Forgot</span>
+                                <span className="text-xs text-red-600 dark:text-red-500 font-medium">Blanked</span>
                             </button>
                         </div>
-                        <button onClick={() => setRatingTarget(null)} className="mt-4 w-full text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Cancel</button>
+                        <button
+                            onClick={() => setRatingTarget(null)}
+                            className="cursor-pointer mt-5 w-full py-2 text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all duration-150"
+                        >
+                            Cancel
+                        </button>
                     </div>
                 </div>
             )}

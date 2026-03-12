@@ -2,8 +2,13 @@ import AuthService from "./auth.service.js";
 
 console.log("[BG] Service Worker Loaded");
 
-const API_BASE_URL = "http://localhost:5000";
-const DASHBOARD_URL = "http://localhost:5175";
+// In production builds, replace these with your deployed URLs via your bundler's
+// define/env plugin (e.g. esbuild --define:PROD_API_URL='"https://api.example.com"').
+// During local dev they fall back to localhost.
+const API_BASE_URL =
+  typeof PROD_API_URL !== "undefined" ? PROD_API_URL : "http://localhost:5000";
+const DASHBOARD_URL =
+  typeof PROD_DASHBOARD_URL !== "undefined" ? PROD_DASHBOARD_URL : "http://localhost:5175";
 
 /* ===============================
    BADGE MANAGEMENT
@@ -171,7 +176,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // Handle login
   if (message.type === "AUTH_LOGIN") {
-    const authUrl = `${API_BASE_URL}/api/auth/google?source=extension`;
+    // getRedirectURL() returns the exact https://<id>.chromiumapp.org/ URL for this
+    // extension build — avoids relying on a hardcoded EXTENSION_ID env var in the backend.
+    const redirectUri = chrome.identity.getRedirectURL();
+    const authUrl = `${API_BASE_URL}/api/auth/google?source=extension&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
     chrome.identity.launchWebAuthFlow(
       { url: authUrl, interactive: true },
@@ -282,6 +290,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "UPDATE_ALARM") {
     scheduleDigestAlarm(message.notifEnabled, message.notifTime);
     sendResponse({ success: true });
+    return true;
+  }
+
+  // ── Check if a specific URL is already saved in the backend ──
+  if (message.type === "CHECK_PROBLEM_BY_URL") {
+    const { url } = message.data;
+    apiFetch(`/api/problems?url=${encodeURIComponent(url)}&limit=1`)
+      .then((data) => {
+        const problem = data?.problems?.[0] || null;
+        sendResponse({ saved: !!problem, problem });
+      })
+      .catch(() => sendResponse({ saved: false, problem: null }));
     return true;
   }
 

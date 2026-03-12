@@ -18,7 +18,7 @@ const DEFAULT_COLOR = { bar: 'bg-indigo-500', bg: 'bg-indigo-100 dark:bg-indigo-
 export default function WeakClusters({ weakClusters = [] }) {
   const [infoVisible, setInfoVisible] = useState(false);
   // Sort by lowest stability first (weakest on top)
-  const sorted = [...weakClusters].sort((a, b) => a.avgStability - b.avgStability);
+  const sorted = [...weakClusters].sort((a, b) => (a.avgStability ?? 0) - (b.avgStability ?? 0));
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
@@ -31,6 +31,8 @@ export default function WeakClusters({ weakClusters = [] }) {
             type="button"
             onMouseEnter={() => setInfoVisible(true)}
             onMouseLeave={() => setInfoVisible(false)}
+            onFocus={() => setInfoVisible(true)}
+            onBlur={() => setInfoVisible(false)}
             className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
             aria-label="What is stability score?"
           >
@@ -53,11 +55,11 @@ export default function WeakClusters({ weakClusters = [] }) {
         </p>
       ) : (
         <div className="space-y-4">
-          {sorted.map((cluster) => {
+          {sorted.map((cluster, index) => {
             const colors = TAG_COLORS[cluster.tag?.toLowerCase()] || DEFAULT_COLOR;
             const hasRevisions = cluster.revisedCount > 0;
             return (
-              <div key={cluster.tag} className={!hasRevisions ? 'opacity-50' : ''}>
+              <div key={cluster.tag ?? index} className={!hasRevisions ? 'opacity-50' : ''}>
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors.bg} ${colors.text}`}>

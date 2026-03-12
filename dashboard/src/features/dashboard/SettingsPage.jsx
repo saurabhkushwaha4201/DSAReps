@@ -64,11 +64,14 @@ const SettingsPage = () => {
 
             // Instantly sync alarm to extension without waiting for 2h polling
             if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
-                chrome.runtime.sendMessage({
-                    type: 'UPDATE_ALARM',
-                    notifEnabled,
-                    notifTime,
-                });
+                chrome.runtime.sendMessage(
+                    { type: 'UPDATE_ALARM', notifEnabled, notifTime },
+                    () => {
+                        if (chrome.runtime.lastError) {
+                            console.warn('[Settings] alarm sync failed:', chrome.runtime.lastError.message);
+                        }
+                    }
+                );
             }
 
             toast.success('Settings saved');
@@ -214,7 +217,6 @@ const SettingsPage = () => {
                                 type="time"
                                 value={notifTime}
                                 onChange={(e) => setNotifTime(e.target.value)}
-                                style={{ colorScheme: 'dark' }}
                                 className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
                             />
                         </div>

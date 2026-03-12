@@ -11,6 +11,8 @@ const STATES = {
     ERROR: 'state-error'
 };
 
+const DASHBOARD_URL = 'https://dsareps.vercel.app/dashboard'; // Update to your production URL
+
 // State Variables
 let currentProblem = null;
 let isAuth = false;
@@ -169,7 +171,7 @@ function renderForm(problem) {
 const linkDashboard = document.getElementById('link-dashboard');
 if (linkDashboard) {
     linkDashboard.addEventListener('click', () => {
-        chrome.tabs.create({ url: 'http://localhost:5175/dashboard' });
+        chrome.tabs.create({ url: DASHBOARD_URL });
     });
 }
 
@@ -181,7 +183,8 @@ if (btnOpenLc) {
 }
 
 // 2. Auth
-document.getElementById('btn-login').addEventListener('click', () => {
+const btnLogin = document.getElementById('btn-login');
+if (btnLogin) btnLogin.addEventListener('click', () => {
     setLoading('Opening login...');
     chrome.runtime.sendMessage({ type: 'AUTH_LOGIN' }, (response) => {
         if (response.success) {
@@ -223,7 +226,9 @@ document.getElementById('save-form').addEventListener('submit', async (e) => {
         title: currentProblem.problemTitle,
         url: currentProblem.url,
         difficulty: difficulty.toLowerCase(),
-        notes: notes
+        notes: notes,
+        attemptType: attemptSelect ? attemptSelect.value : 'fresh',
+        timeSpent: 0,
     };
 
     console.log("SAVE PAYLOAD", payload);
@@ -258,8 +263,10 @@ document.getElementById('save-form').addEventListener('submit', async (e) => {
     });
 });
 
-document.getElementById('btn-retry').addEventListener('click', () => init());
-document.getElementById('btn-close').addEventListener('click', () => window.close());
+const btnRetry = document.getElementById('btn-retry');
+if (btnRetry) btnRetry.addEventListener('click', () => init());
+const btnClose = document.getElementById('btn-close');
+if (btnClose) btnClose.addEventListener('click', () => window.close());
 
 // 4. Manual Track
 const btnManualTrack = document.getElementById('btn-manual-track');

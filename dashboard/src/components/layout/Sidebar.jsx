@@ -27,7 +27,7 @@ const Sidebar = () => {
             <aside className="hidden md:flex flex-col w-60 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 h-screen fixed left-0 top-0 z-40 transition-colors">
                 <div className="p-6">
                     <h1 className="text-2xl tracking-tight flex items-center gap-2">
-                        <svg xmlns="" width="32" height="32" viewBox="0 0 24 24" fill="none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none">
 <path d="M12 5L6 16" stroke="#4b5563" strokeWidth="2" strokeLinecap="round"/>
 <path d="M12 5L18 16" stroke="#4b5563" strokeWidth="2" strokeLinecap="round"/>
 <path d="M6 16H18" stroke="#4b5563" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 3"/>
@@ -36,7 +36,7 @@ const Sidebar = () => {
 <circle cx="6" cy="16" r="3.5" fill="#10b981" className="drop-shadow-[0_0_6px_rgba(16,185,129,0.8)]"/>
 <circle cx="18" cy="16" r="3.5" fill="#f59e0b" className="drop-shadow-[0_0_6px_rgba(245,158,11,0.8)]"/>
 </svg>
-                        <span className="text-white dark:text-white font-extrabold tracking-tight">DSA</span><span className="text-indigo-400 font-extrabold tracking-tight">Reps</span>
+                        <span className="text-gray-900 dark:text-white font-extrabold tracking-tight">DSA</span><span className="text-indigo-400 font-extrabold tracking-tight">Reps</span>
                     </h1>
                 </div>
 

@@ -288,6 +288,23 @@ const STYLES = `
   }
   .revise-more-btn:hover { background: rgba(129,140,248,0.2); }
 
+  /* ── Hub Intercept Banner ───────────────────────────────────── */
+  .hub-intercept {
+    background: rgba(79, 70, 229, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .hub-intercept p {
+    font-size: 12px;
+    font-weight: 600;
+    color: #a5b4fc;
+    line-height: 1.5;
+    margin: 0;
+  }
+
   .loading { text-align: center; padding: 24px; color: #6c7086; font-size: 13px; }
 `;
 
@@ -301,7 +318,7 @@ const REVIEW_TYPE_LABEL = {
 const MIN_BOTTOM = 80;
 const MIN_RIGHT = 16;
 
-export default function FloatingCapsule() {
+export default function FloatingCapsule({ pageType = 'problem' }) {
   const [expanded, setExpanded] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -466,6 +483,11 @@ export default function FloatingCapsule() {
               </button>
             </div>
             <div className="panel-body">
+              {pageType === 'hub' && (
+                <div className="hub-intercept">
+                  <p>🛑 Wait Hero! Finish your pending reps before starting a new one.</p>
+                </div>
+              )}
               {loading && <div className="loading">Loading tasks...</div>}
 
               {!loading && tasks.length === 0 && (
@@ -480,9 +502,8 @@ export default function FloatingCapsule() {
                       setCurrentIdx(0);
                       setLoading(true);
                       chrome.runtime.sendMessage({ type: 'GET_DAILY_TASKS' }, (res) => {
-                        const list = res?.tasks || [];
+                        const list = res?.problems || [];
                         setTasks(list);
-                        setOriginalTotal(list.length);
                         setLoading(false);
                       });
                     }}
@@ -520,6 +541,7 @@ export default function FloatingCapsule() {
                       </span>
                       <span>Stability: {currentTask.stabilityScore}%</span>
                     </div>
+                    {pageType === 'problem' && (
                     <div className="rating-row">
                       <button
                         className="rate-btn forgot"
@@ -543,6 +565,7 @@ export default function FloatingCapsule() {
                         Clean
                       </button>
                     </div>
+                    )}
                   </div>
 
                   {/* Progress dots */}

@@ -3,13 +3,14 @@ const Problem = require('./problem.model');
 /**
  * Anti-Avalanche Daily Triage Service — 2-Phase
  *
- * Phase A: Manual overrides due today or earlier (user-pinned problems).
- * Phase B: Algorithmic picks sorted by lowest stabilityScore.
- * Combined result is capped at the user's dailyCap.
+ * Phase A: Manual/pinned overrides due today or earlier are always included
+ *          and can exceed the user's dailyCap/dailyGoal.
+ * Phase B: Algorithmic picks sorted by lowest stabilityScore, trimmed to
+ *          respect the remaining dailyCap slots after overrides are counted.
+ * The returned array may therefore be larger than dailyCap when overrides exist.
  *
- * If a user misses a pinned override on Tuesday, it stays in Phase A
- * on Wednesday because manualOverrideDate is still <= today.
- * Override is only cleared when the user actually rates the problem.
+ * Overrides persist until the user actually rates the problem
+ * (manualOverrideDate is only cleared on a rating call).
  */
 
 /**

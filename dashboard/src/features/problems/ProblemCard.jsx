@@ -116,10 +116,10 @@ export default function ProblemCard({ problem, onMarkRevised, onArchive, onResto
                                         ref={calBtnRef}
                                         onClick={() => !isArchived && isOnline && setShowPopover(v => !v)}
                                         disabled={!isOnline || rescheduling}
-                                        className={`inline-flex items-center gap-1 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:underline ${
+                                        className={`inline-flex items-center gap-1 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:underline cursor-pointer ${
                                             overdue ? 'text-red-500 dark:text-red-400' :
                                             due ? 'text-amber-500 dark:text-amber-400' :
-                                            'text-slate-400 dark:text-slate-500 hover:text-indigo-500 dark:hover:text-indigo-400 cursor-pointer'
+                                            'text-slate-400 dark:text-slate-500 hover:text-indigo-500 dark:hover:text-indigo-400'
                                         }`}
                                         title="Click to reschedule"
                                     >

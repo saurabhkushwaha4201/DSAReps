@@ -101,6 +101,10 @@ const getAllProblems = async (req, res) => {
       isDeleted: { $ne: true },
     };
 
+    if (req.query.url) {
+      query.url = req.query.url;
+    }
+
     const [problems, total] = await Promise.all([
       Problem.find(query)
         .sort({ createdAt: -1 })
