@@ -2,7 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import CaptureModal from './CaptureModal';
 import FloatingCapsule from './FloatingCapsule';
-import { detectPlatform } from './platformConfigs';
+import { detectPlatform, isKnownHubPage } from './platformConfigs';
 
 console.log('[DSA Tracker] Content Script Loaded');
 
@@ -260,8 +260,30 @@ async function injectAndSync(config) {
       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
     </svg>`;
 
-  // 3. Initial sync — set state from storage before appending
-  const alreadySaved = await StorageController.isSaved(problemId);
+  // 3. Initial sync — check local cache first, then backend as fallback
+  let alreadySaved = await StorageController.isSaved(problemId);
+
+  if (!alreadySaved) {
+    // Not in local cache — ask backend (covers problems saved via dashboard/popup)
+    const backendCheck = await new Promise((resolve) => {
+      chrome.runtime.sendMessage(
+        { type: 'CHECK_PROBLEM_BY_URL', data: { url: window.location.href } },
+        (res) => resolve(res || { saved: false, problem: null })
+      );
+    });
+    if (backendCheck.saved && backendCheck.problem) {
+      // Sync into local cache so future checks are instant
+      await StorageController.save({
+        id: problemId,
+        title: problemTitle,
+        url: window.location.href,
+        platform: config.platform,
+        dbId: backendCheck.problem._id,
+      });
+      alreadySaved = true;
+    }
+  }
+
   // is-saved triggers Tier 2 (big pop after entrance); plain btn gets Tier 1 (subtle entrance)
   if (alreadySaved) btn.classList.add('is-saved');
 
@@ -276,9 +298,12 @@ async function injectAndSync(config) {
       // Already saved — remove from backend first, then local cache
       const saved = await StorageController.get(problemId);
       if (saved?.dbId) {
-        const response = await new Promise((resolve) => {
-          chrome.runtime.sendMessage({ type: 'REMOVE_PROBLEM', data: { dbId: saved.dbId } }, resolve);
-        });
+        const response = await Promise.race([
+          new Promise((resolve) => {
+            chrome.runtime.sendMessage({ type: 'REMOVE_PROBLEM', data: { dbId: saved.dbId } }, resolve);
+          }),
+          new Promise((resolve) => setTimeout(() => resolve({ error: 'timeout' }), 8000)),
+        ]);
         if (response?.error) {
           showToast('Failed to remove problem', '❌');
           btn.style.pointerEvents = 'auto';
@@ -313,11 +338,12 @@ async function injectAndSync(config) {
 
 let capsuleRoot = null;
 
-function injectFloatingCapsule() {
-  if (!activeConfig?.capsuleEnabled) return;
+function injectFloatingCapsule(pageType = 'problem') {
+  // On problem pages require capsuleEnabled; on hub pages always inject
+  if (pageType === 'problem' && activeConfig && !activeConfig.capsuleEnabled) return;
   if (document.getElementById('dsa-tracker-capsule-host')) return;
 
-  const offset = activeConfig.capsuleOffset || { bottom: 24, right: 24 };
+  const offset = activeConfig?.capsuleOffset || { bottom: 24, right: 24 };
   const capsuleShadow = createShadowHost('dsa-tracker-capsule-host');
   const host = document.getElementById('dsa-tracker-capsule-host');
   host.style.cssText = `all: initial; position: fixed; bottom: ${offset.bottom}px; right: ${offset.right}px; z-index: 2147483647;`;
@@ -327,7 +353,7 @@ function injectFloatingCapsule() {
   capsuleShadow.appendChild(mountPoint);
 
   capsuleRoot = createRoot(mountPoint);
-  capsuleRoot.render(<FloatingCapsule />);
+  capsuleRoot.render(<FloatingCapsule pageType={pageType} />);
 }
 
 // ── Cleanup — destroys all injected UI ──────────────────────
@@ -350,12 +376,22 @@ function cleanup() {
 // ── Initialization ─────────────────────────────────────────
 
 async function tryInjectAll() {
-  const config = detectPlatform(window.location.hostname, window.location.href);
-  if (!config) return;
-  activeConfig = config;
-  injectFloatingCapsule();
-  await injectAndSync(config);
+  const url = window.location.href;
+  const hostname = window.location.hostname;
+  const config = detectPlatform(hostname, url);
+
+  if (config) {
+    // ── Problem Page: full widget (bookmark button + capsule with rating)
+    activeConfig = config;
+    injectFloatingCapsule('problem');
+    await injectAndSync(config);
+  } else if (isKnownHubPage(hostname, url)) {
+    // ── Hub/Exploration Page: capsule only (same UI as problem page, no bookmark btn)
+    injectFloatingCapsule('problem');
+  }
 }
+
+let lastUrl = location.href;
 let injectTimeout = null;
 
 const observer = new MutationObserver(() => {

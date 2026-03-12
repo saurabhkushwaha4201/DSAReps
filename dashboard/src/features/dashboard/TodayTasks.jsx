@@ -80,8 +80,8 @@ export default function TodayTasks() {
   const handleReviseMore = async () => {
     setRefreshing(true);
     try {
-      await fetchTasks();
-      if (tasks.length === 0) {
+      const newTasks = await fetchTasks();
+      if (newTasks.length === 0) {
         toast('No more problems due right now', { icon: '📭' });
       }
     } catch {

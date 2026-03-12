@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, Send, Loader2, CheckCircle2 } from 'lucide-react';
 
 const FEEDBACK_TYPES = [
@@ -11,20 +11,39 @@ const FeedbackModal = ({ isOpen, onClose, userName, userEmail }) => {
     const [type, setType]       = useState('Bug Report 🐛');
     const [message, setMessage] = useState('');
     const [status, setStatus]   = useState('idle'); // idle | loading | success | error
+    const closeTimeoutRef       = useRef(null);
+
+    // ESC key to close
+    useEffect(() => {
+        if (!isOpen) return;
+        const onKeyDown = (e) => { if (e.key === 'Escape') handleClose(); };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const accessKey = import.meta.env.VITE_WEB3FORM_ACCESS_KEY;
+        if (!accessKey) {
+            console.error('[FeedbackModal] VITE_WEB3FORM_ACCESS_KEY is not set');
+            setStatus('error');
+            return;
+        }
         setStatus('loading');
+
+        const safeName  = userName  || 'Anonymous';
+        const safeEmail = userEmail || 'no-reply@example.com';
 
         try {
             const response = await fetch('https://api.web3forms.com/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
                 body: JSON.stringify({
-                    access_key: import.meta.env.VITE_WEB3FORM_ACCESS_KEY,
-                    subject:    `DSA Tracker: ${type} from ${userName}`,
-                    from_name:  userName,
-                    email:      userEmail,
+                    access_key: accessKey,
+                    subject:    `DSA Tracker: ${type} from ${safeName}`,
+                    from_name:  safeName,
+                    email:      safeEmail,
                     message,
                 }),
             });
@@ -46,18 +65,28 @@ const FeedbackModal = ({ isOpen, onClose, userName, userEmail }) => {
 
     const handleClose = () => {
         onClose();
-        // Reset after animation plays
-        setTimeout(() => {
+        // Reset after animation plays — cancel any pending reset first
+        if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = setTimeout(() => {
             setStatus('idle');
             setMessage('');
+            closeTimeoutRef.current = null;
         }, 200);
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-            <div className="bg-white dark:bg-[#0f1117] border border-slate-200 dark:border-white/5 rounded-2xl w-full max-w-lg p-8 shadow-2xl">
+        <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+            onMouseDown={(e) => { if (e.target === e.currentTarget) handleClose(); }}
+        >
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="feedback-modal-title"
+                className="bg-white dark:bg-[#0f1117] border border-slate-200 dark:border-white/5 rounded-2xl w-full max-w-lg p-8 shadow-2xl"
+            >
 
                 {status === 'success' ? (
                     <div className="text-center py-8">
@@ -73,12 +102,13 @@ const FeedbackModal = ({ isOpen, onClose, userName, userEmail }) => {
                     <form onSubmit={handleSubmit}>
                         {/* Header */}
                         <div className="flex justify-between items-center mb-5">
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                            <h2 id="feedback-modal-title" className="text-lg font-bold text-slate-900 dark:text-white">
                                 Send Feedback
                             </h2>
                             <button
                                 type="button"
                                 onClick={handleClose}
+                                aria-label="Close feedback modal"
                                 className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                             >
                                 <X className="w-5 h-5" />

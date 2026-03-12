@@ -79,7 +79,11 @@ const updateSettings = async (req, res) => {
 
     // ── Validate notification settings ──────────────────────
     if (notificationEnabled !== undefined) {
-      update.notificationEnabled = Boolean(notificationEnabled);
+      if (typeof notificationEnabled === 'string') {
+        update.notificationEnabled = notificationEnabled.toLowerCase() === 'true';
+      } else {
+        update.notificationEnabled = Boolean(notificationEnabled);
+      }
     }
 
     if (notificationTime !== undefined) {

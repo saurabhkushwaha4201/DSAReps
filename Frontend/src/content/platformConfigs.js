@@ -34,11 +34,11 @@ export const PLATFORM_CONFIGS = {
     platform: 'cses',
     host: 'cses.fi',
     isProblemPage: (url) => /\/problemset\/task\/\d+/.test(url),
-    // Title is inside h1 within the title-block container
-    titleSelector: 'div.title-block h1',    injectPosition: 'afterend',
+    titleSelector: 'div.title-block h1',
+    injectPosition: 'afterend',
     titleCleanup: ' - CSES',
     capsuleEnabled: true,
-    titleCleanup: /( - GeeksforGeeks|GeeksforGeeks)$/,    titleCleanup: /( - GeeksforGeeks|GeeksforGeeks)$/,  },
+  },
 
   codeforces: {
     platform: "codeforces",
@@ -78,6 +78,28 @@ export const PLATFORM_CONFIGS = {
     slugIndex: null,
   },
 };
+
+/**
+ * Detect if a URL is a hub/exploration page (problemset listing, study plan, etc.)
+ * for a known platform — but NOT a specific problem page.
+ * @returns {boolean}
+ */
+export function isKnownHubPage(hostname, url) {
+  if (hostname.includes('leetcode.com')) {
+    return (url.includes('/problemset/') || url.includes('/study-plan/'))
+      && !url.includes('/problems/');
+  }
+  if (hostname.includes('codeforces.com')) {
+    return url.includes('/problemset') && !/\/problemset\/problem\//.test(url);
+  }
+  if (hostname.includes('geeksforgeeks.org')) {
+    return url.includes('/explore');
+  }
+  if (hostname.includes('cses.fi')) {
+    return url.includes('/problemset/list') || /cses\.fi\/problemset\/?$/.test(url);
+  }
+  return false;
+}
 
 /**
  * Detect platform config for the current page.
