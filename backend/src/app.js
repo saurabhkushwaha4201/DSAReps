@@ -8,18 +8,29 @@ const userRoutes = require('./modules/users/user.routes');
 
 const app = express();
 
-// Core middleware
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5175'];
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, same-origin)
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-}));
+
+// Allowed origins
+const allowedOrigins = [
+  "http://localhost:5175",
+  process.env.DASHBOARD_URL
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow requests without origin (mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true
+  })
+);
+
 app.use(express.json());
 
 // Health check
@@ -32,17 +43,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/problems', problemRoutes);
 app.use('/api/revisions', revisionRoutes);
 app.use('/api/user', userRoutes);
-
-// Custom Requested Routes
-const revisionController = require('./modules/revisions/revision.controller');
-const protect = require('./middleware/auth.middleware');
-
-// POST /api/reviews -> Creates a review/log
-app.post('/api/reviews', protect, revisionController.createReview);
-
-// GET /api/dashboard/stats -> Stats
-app.get('/api/dashboard/stats', protect, revisionController.getDashboardStats);
-
 
 // 404 handler
 app.use((req, res) => {
