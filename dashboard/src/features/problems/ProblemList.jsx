@@ -299,7 +299,7 @@ export default function ProblemList() {
                     </>
                 ) : view === 'active' ? (
                     /* Head Start Section - Only for Active view when empty */
-                    <HeadStartSection problems={problems} onOpenNotes={handleOpenNotes} />
+                    <HeadStartSection problems={problems} onOpenNotes={handleOpenNotes} onMarkRevised={handleMarkRevised} />
                 ) : (
                     <div className="text-center py-12 text-slate-500 dark:text-slate-400">
                         No archived problems found.
@@ -400,7 +400,7 @@ export default function ProblemList() {
  * HeadStartSection - Shown when all due items are complete
  * Suggests next 3 upcoming problems to get a head start
  */
-function HeadStartSection({ problems, onOpenNotes }) {
+function HeadStartSection({ problems, onOpenNotes, onMarkRevised }) {
     // Get next 3 upcoming problems (earliest nextReviewDate)
     const upcomingProblems = useMemo(() => {
         return problems
@@ -476,7 +476,7 @@ function HeadStartSection({ problems, onOpenNotes }) {
                         <ProblemCard
                             key={problem._id || problem.id}
                             problem={problem}
-                            onMarkRevised={handleMarkRevised}
+                            onMarkRevised={onMarkRevised}
                             onArchive={() => { }}
                             onRestore={() => { }}
                             onOpenNotes={onOpenNotes}

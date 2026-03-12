@@ -19,7 +19,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 // Global auth failure handling
 api.interceptors.response.use(
@@ -29,10 +29,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
 
-      // Prevent flood of toasts if many requests fail at once
-      if (!document.querySelector('.Toastify__toast--error')) {
-        toast.error("Session expired. Please log in again.");
-      }
+      // Fixed ID prevents duplicate toasts if many requests fail at once
+      toast.error("Session expired. Please log in again.", { id: 'session-expired' });
 
       // Only redirect if running in dashboard (browser), not extension background potentially
       if (window.location.pathname !== "/login") {
@@ -45,7 +43,7 @@ api.interceptors.response.use(
 
     // 500 or Network Error
     if (error.response?.status >= 500 || error.code === 'ERR_NETWORK') {
-      toast.error("Network error. Please try again later.");
+      toast.error("Network error. Please try again later.", { id: 'network-error' });
     }
 
     return Promise.reject(error);

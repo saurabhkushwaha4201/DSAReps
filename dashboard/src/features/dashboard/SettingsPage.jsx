@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import DataExport from '../../components/settings/DataExport';
+import DataExport from './DataExport';
 import { getUserSettings, updateUserSettings } from '../../api/problem.api';
 import { Save, Loader2, Bell, BellOff, Mail, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
