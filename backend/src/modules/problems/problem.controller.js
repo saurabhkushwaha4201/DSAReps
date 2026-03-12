@@ -93,7 +93,9 @@ const RATING_RULES = {
 const getAllProblems = async (req, res) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 20;
+    let limit = parseInt(req.query.limit, 10) || 20;
+    // Cap limit to prevent abuse (e.g., ?limit=999999)
+    limit = Math.min(Math.max(limit, 1), 100);
     const skip = (page - 1) * limit;
 
     const query = {
@@ -131,6 +133,37 @@ const saveProblem = async (req, res) => {
     const { platform, title, url, difficulty, notes } = req.body;
     const userId = req.user.id;
     const timezone = req.body.timezone || req.query.tz || 'UTC';
+
+    // ── Validate inputs ────────────────────────────────────
+    const VALID_PLATFORMS = ['leetcode', 'codeforces', 'cses', 'gfg', 'other'];
+    if (!VALID_PLATFORMS.includes(platform)) {
+      return res.status(400).json({ message: 'Invalid platform.' });
+    }
+
+    const VALID_DIFFICULTIES = ['easy', 'medium', 'hard'];
+    if (!VALID_DIFFICULTIES.includes(difficulty)) {
+      return res.status(400).json({ message: 'Invalid difficulty.' });
+    }
+
+    // Validate URL is actually a URL
+    try {
+      const urlObj = new URL(url);
+      if (!['http:', 'https:'].includes(urlObj.protocol)) {
+        return res.status(400).json({ message: 'URL must start with http:// or https://' });
+      }
+    } catch {
+      return res.status(400).json({ message: 'Invalid URL format.' });
+    }
+
+    // Validate notes length (max 50KB)
+    if (notes && notes.length > 50000) {
+      return res.status(400).json({ message: 'Notes must be less than 50KB.' });
+    }
+
+    // Validate title
+    if (!title || title.trim().length === 0) {
+      return res.status(400).json({ message: 'Title is required.' });
+    }
 
     let problem = await Problem.findOne({ userId, url });
 
@@ -479,7 +512,13 @@ const deleteProblem = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
-    const problem = await Problem.findOneAndDelete({ _id: id, userId });
+    // Use soft delete: mark as isDeleted: true
+    // This prevents the URL from being re-added immediately and maintains history
+    const problem = await Problem.findOneAndUpdate(
+      { _id: id, userId },
+      { isDeleted: true },
+      { new: true }
+    );
 
     if (!problem) {
       return res.status(404).json({ message: 'Problem not found' });

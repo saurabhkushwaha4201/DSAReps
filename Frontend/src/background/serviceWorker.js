@@ -2,17 +2,13 @@ import AuthService from "./auth.service.js";
 
 console.log("[BG] Service Worker Loaded");
 
-// In production builds, replace these with your deployed URLs via your bundler's
-// define/env plugin (e.g. esbuild --define:PROD_API_URL='"https://api.example.com"').
-// During local dev they fall back to localhost.
-const API_BASE_URL =
-  typeof PROD_API_URL !== "undefined" ? PROD_API_URL : "http://localhost:5000";
-const DASHBOARD_URL =
-  typeof PROD_DASHBOARD_URL !== "undefined" ? PROD_DASHBOARD_URL : "http://localhost:5175";
 
-/* ===============================
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "https://extension-backend-mlcm.onrender.com/";
+const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || "http://localhost:5175";
+
+/* 
    BADGE MANAGEMENT
-================================ */
+ */
 
 async function updateBadge(count) {
   try {
