@@ -23,7 +23,7 @@ Title: "Good Morning! Ready to code? 💻" (or Afternoon/Evening based on hour)
 Message: "We've queued up 3 problems for you to review today. Let's get it done!"
 4. User clicks the notification
 
-Opens http://localhost:5175/focus in a new tab
+Opens `${DASHBOARD_URL}/dashboard` in a new tab
 Clears the notification from the OS tray
 5. Service worker restarts (browser restart / Chrome kills it)
 
