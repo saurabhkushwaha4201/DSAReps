@@ -42,4 +42,3 @@ Logged out, alarm fires	Silent — auth check fails
 Browser restarted	Alarm restored from backend settings
 User changes time from 9:00 to 20:00	Old alarm cleared instantly, new one set for 8 PM
 Token expired	isAuthenticated() clears auth, notification silenced
-Claude Sonnet 4.6 • 1x
