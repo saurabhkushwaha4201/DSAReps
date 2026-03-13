@@ -11,8 +11,6 @@ const STATES = {
     ERROR: 'state-error'
 };
 
-const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || "http://localhost:5175";
-
 // State Variables
 let currentProblem = null;
 let isAuth = false;
@@ -23,6 +21,36 @@ const views = {};
 Object.values(STATES).forEach(id => {
     views[id] = document.getElementById(id);
 });
+
+function syncBtnGroup(groupId, dataAttr, value) {
+    const group = document.getElementById(groupId);
+    if (!group) return;
+    group.querySelectorAll('.btn-group-item').forEach((button) => {
+        button.classList.toggle('active', button.getAttribute(dataAttr) === value);
+    });
+}
+
+function initBtnGroup(groupId, selectId, dataAttr) {
+    const group = document.getElementById(groupId);
+    const select = document.getElementById(selectId);
+    if (!group || !select) return;
+
+    group.addEventListener('click', (event) => {
+        const button = event.target.closest(`[${dataAttr}]`);
+        if (!button) return;
+        const value = button.getAttribute(dataAttr);
+        select.value = value;
+        syncBtnGroup(groupId, dataAttr, value);
+    });
+
+    syncBtnGroup(groupId, dataAttr, select.value);
+}
+
+function initManualGroups() {
+    initBtnGroup('difficulty-group', 'difficulty', 'data-val');
+    initBtnGroup('manual-diff-group', 'manual-difficulty', 'data-diff');
+    initBtnGroup('manual-platform-group', 'manual-platform', 'data-platform');
+}
 
 // UI Helpers
 function showState(stateId) {
@@ -95,13 +123,38 @@ async function checkCurrentPage() {
     try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-        if (!tab || !tab.id) {
+        if (!tab || !tab.id || !tab.url) {
             showState(STATES.UNSUPPORTED);
             return;
         }
 
+        // Fast-fail for unsupported hosts so popup doesn't stay in spinner state.
+        const SUPPORTED_URL_PATTERNS = [
+            /^https?:\/\/(www\.)?leetcode\.com\//i,
+            /^https?:\/\/(www\.)?codeforces\.com\//i,
+            /^https?:\/\/(www\.)?cses\.fi\//i,
+            /^https?:\/\/(www\.)?geeksforgeeks\.org\//i,
+            /^https?:\/\/practice\.geeksforgeeks\.org\//i,
+        ];
+        const isSupportedHost = SUPPORTED_URL_PATTERNS.some((rx) => rx.test(tab.url));
+        if (!isSupportedHost) {
+            showState(STATES.UNSUPPORTED);
+            return;
+        }
+
+        let responded = false;
+        const timeoutId = setTimeout(() => {
+            if (!responded) {
+                console.warn('Content script response timeout');
+                showState(STATES.UNSUPPORTED);
+            }
+        }, 3000);
+
         // Send message to content script
         chrome.tabs.sendMessage(tab.id, { action: 'GET_PROBLEM_DETAILS' }, (response) => {
+            responded = true;
+            clearTimeout(timeoutId);
+
             if (chrome.runtime.lastError) {
                 // Usually means content script not loaded (restricted page or loading)
                 console.warn('Content script error:', chrome.runtime.lastError);
@@ -131,6 +184,7 @@ function renderForm(problem) {
 
     // Default Difficulty based on platform logic could go here
     if (diffSelect) diffSelect.value = 'Medium';
+    syncBtnGroup('difficulty-group', 'data-val', 'Medium');
 
     // Update button labels with user's actual revision intervals
     const labels = { Hard: userIntervals.hard, Medium: userIntervals.medium, Easy: userIntervals.easy };
@@ -171,7 +225,11 @@ function renderForm(problem) {
 const linkDashboard = document.getElementById('link-dashboard');
 if (linkDashboard) {
     linkDashboard.addEventListener('click', () => {
-        chrome.tabs.create({ url: DASHBOARD_URL });
+        chrome.runtime.sendMessage({ type: 'OPEN_DASHBOARD' }, (response) => {
+            if (chrome.runtime.lastError || !response?.success) {
+                chrome.tabs.create({ url: 'https://dsareps.vercel.app/dashboard' });
+            }
+        });
     });
 }
 
@@ -300,6 +358,7 @@ if (manualUrlInput && manualPlatformSelect) {
             const match = PLATFORM_HOSTS.find(p => hostname.includes(p.host));
             if (match) manualPlatformSelect.value = match.value;
             else manualPlatformSelect.value = 'other';
+            syncBtnGroup('manual-platform-group', 'data-platform', manualPlatformSelect.value);
         } catch { /* invalid URL yet */ }
     });
 }
@@ -374,4 +433,5 @@ function pollAuthStatus() {
 }
 
 // Start
+initManualGroups();
 init();
