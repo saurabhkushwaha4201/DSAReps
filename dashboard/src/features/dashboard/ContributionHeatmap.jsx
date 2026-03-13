@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const DAY_LABELS = [
   { label: 'Mon', row: 1 },
@@ -7,9 +7,8 @@ const DAY_LABELS = [
 ];
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const CELL_SIZE = 12;
 const CELL_GAP = 4;
-const GRID_STEP = CELL_SIZE + CELL_GAP;
+const DAYS_TO_SHOW = 182;
 const LEVEL_CLASSES = [
   'bg-slate-200 dark:bg-slate-800',
   'bg-emerald-200 dark:bg-emerald-950',
@@ -62,7 +61,7 @@ export default function ContributionHeatmap({ heatmap = [] }) {
     [timezone]
   );
 
-  const { calendarGrid, monthLabels, totalActivities } = useMemo(() => {
+  const { calendarGrid, monthLabels, monthlyReps, longestStreak, weekCount } = useMemo(() => {
     const activityMap = heatmap.reduce((acc, item) => {
       acc[item.date] = item.count;
       return acc;
@@ -70,17 +69,21 @@ export default function ContributionHeatmap({ heatmap = [] }) {
 
     const today = new Date();
     today.setHours(12, 0, 0, 0);
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
 
     const days = [];
-    let total = 0;
+    let monthTotal = 0;
 
-    for (let i = 364; i >= 0; i -= 1) {
+    for (let i = DAYS_TO_SHOW - 1; i >= 0; i -= 1) {
       const day = new Date(today);
       day.setDate(today.getDate() - i);
 
       const dateKey = formatDateKey(day, timezone);
       const count = activityMap[dateKey] || 0;
-      total += count;
+      if (day.getMonth() === currentMonth && day.getFullYear() === currentYear) {
+        monthTotal += count;
+      }
 
       days.push({
         date: dateKey,
@@ -90,10 +93,27 @@ export default function ContributionHeatmap({ heatmap = [] }) {
     }
 
     const paddingCount = days[0]?.dateObj.getDay() || 0;
+    let runningStreak = 0;
+    let maxStreak = 0;
+    for (const day of days) {
+      if (day.count > 0) {
+        runningStreak += 1;
+        maxStreak = Math.max(maxStreak, runningStreak);
+      } else {
+        runningStreak = 0;
+      }
+    }
+
     const padding = Array.from({ length: paddingCount }, (_, index) => ({
       type: 'pad',
       key: `pad-${index}`,
     }));
+    const trailingPadCount = (7 - ((paddingCount + days.length) % 7)) % 7;
+    const trailingPadding = Array.from({ length: trailingPadCount }, (_, index) => ({
+      type: 'pad',
+      key: `pad-end-${index}`,
+    }));
+    const totalColumns = Math.ceil((paddingCount + days.length + trailingPadCount) / 7);
 
     const monthPositions = [];
     let lastMonth = -1;
@@ -118,11 +138,46 @@ export default function ContributionHeatmap({ heatmap = [] }) {
           level: getLevel(day.count),
           key: day.date,
         })),
+        ...trailingPadding,
       ],
       monthLabels: monthPositions,
-      totalActivities: total,
+      monthlyReps: monthTotal,
+      longestStreak: maxStreak,
+      weekCount: totalColumns,
     };
   }, [heatmap, timezone]);
+
+  const gridContainerRef = useRef(null);
+  const [gridWidth, setGridWidth] = useState(0);
+
+  useEffect(() => {
+    if (!gridContainerRef.current) return undefined;
+
+    const updateWidth = () => {
+      if (gridContainerRef.current) {
+        setGridWidth(gridContainerRef.current.clientWidth);
+      }
+    };
+
+    updateWidth();
+
+    const observer = new ResizeObserver(() => {
+      updateWidth();
+    });
+
+    observer.observe(gridContainerRef.current);
+
+    return () => observer.disconnect();
+  }, [weekCount]);
+
+  const cellSize = useMemo(() => {
+    if (!gridWidth || !weekCount) return 12;
+    const size = (gridWidth - (weekCount - 1) * CELL_GAP) / weekCount;
+    return Math.max(10, size);
+  }, [gridWidth, weekCount]);
+
+  const gridStep = cellSize + CELL_GAP;
+  const gridHeight = 7 * cellSize + 6 * CELL_GAP;
 
   const handleMouseEnter = (event, day) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -139,14 +194,6 @@ export default function ContributionHeatmap({ heatmap = [] }) {
     setTooltip((current) => ({ ...current, visible: false }));
   };
 
-  const scrollRef = useRef(null);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
-    }
-  }, [calendarGrid]);
-
   return (
     <div className="relative rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950 p-6 text-slate-700 dark:text-slate-100 shadow-sm">
       {tooltip.visible && (
@@ -160,7 +207,7 @@ export default function ContributionHeatmap({ heatmap = [] }) {
           }}
         >
           <strong className="font-semibold text-emerald-400">
-            {tooltip.count === 0 ? 'No' : tooltip.count} activities
+            {tooltip.count === 0 ? 'No' : tooltip.count} reps
           </strong>{' '}
           on {tooltip.date}
           <span
@@ -180,55 +227,72 @@ export default function ContributionHeatmap({ heatmap = [] }) {
             from { opacity: 0; transform: translate(-50%, -90%); }
             to { opacity: 1; transform: translate(-50%, -100%); }
           }
-          .heatmap-scroll::-webkit-scrollbar { height: 6px; }
-          .heatmap-scroll::-webkit-scrollbar-track { background: transparent; }
-          .heatmap-scroll::-webkit-scrollbar-thumb { background-color: #374151; border-radius: 10px; }
-          .heatmap-scroll::-webkit-scrollbar-thumb:hover { background-color: #4b5563; }
         `}
       </style>
 
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Activity</h3>
-        <span className="text-xs text-slate-500 dark:text-slate-400">{totalActivities} activities in the last 365 days</span>
-      </div>
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Activity</h3>
 
-      <div ref={scrollRef} className="heatmap-scroll overflow-x-auto pb-2">
-        <div className="min-w-max">
-          <div className="relative mb-2 ml-8 h-4 text-[10px] text-slate-400 dark:text-slate-500">
-            {monthLabels.map((month) => (
-              <span
-                key={month.key}
-                className="absolute"
-                style={{ left: `${month.column * GRID_STEP}px` }}
-              >
-                {month.label}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1">
+            <span className="text-sm">🎯</span>
+            <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-100">
+              {monthlyReps}
+              <span className="ml-0.5 text-xs font-normal text-indigo-500/80 dark:text-indigo-300/70">
+                {' '}reps this month
               </span>
-            ))}
+            </span>
           </div>
 
+          <div className="flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1">
+            <span className="text-sm">🏆</span>
+            <span className="text-sm font-semibold text-amber-700 dark:text-amber-100">
+              {longestStreak}
+              <span className="ml-0.5 text-xs font-normal text-amber-600/80 dark:text-amber-300/70">
+                {' '}max streak
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-hidden pb-2">
+        <div className="w-full">
           <div className="flex items-start gap-3">
             <div
               className="relative w-5 text-[10px] text-slate-400 dark:text-slate-500"
-              style={{ height: `${7 * CELL_SIZE + 6 * CELL_GAP}px` }}
+              style={{ height: `${gridHeight}px` }}
             >
               {DAY_LABELS.map((item) => (
                 <span
                   key={item.label}
                   className="absolute left-0"
-                  style={{ top: `${item.row * GRID_STEP}px`, transform: 'translateY(-50%)' }}
+                  style={{ top: `${item.row * gridStep}px`, transform: 'translateY(-50%)' }}
                 >
                   {item.label}
                 </span>
               ))}
             </div>
 
-            <div>
+            <div ref={gridContainerRef} className="min-w-0 flex-1">
+              <div className="relative mb-2 h-4 text-[10px] text-slate-400 dark:text-slate-500">
+                {monthLabels.map((month) => (
+                  <span
+                    key={month.key}
+                    className="absolute"
+                    style={{ left: `${month.column * gridStep}px` }}
+                  >
+                    {month.label}
+                  </span>
+                ))}
+              </div>
+
               <div
-                className="grid"
+                className="grid w-full"
                 style={{
-                  gridTemplateRows: `repeat(7, ${CELL_SIZE}px)`,
+                  gridTemplateRows: `repeat(7, ${cellSize}px)`,
                   gridAutoFlow: 'column',
-                  gridAutoColumns: `${CELL_SIZE}px`,
+                  gridAutoColumns: `${cellSize}px`,
                   gap: `${CELL_GAP}px`,
                 }}
               >
@@ -237,7 +301,8 @@ export default function ContributionHeatmap({ heatmap = [] }) {
                     return (
                       <div
                         key={entry.key}
-                        className="h-3 w-3 rounded-sm bg-transparent"
+                        className="rounded-sm bg-transparent"
+                        style={{ height: `${cellSize}px`, width: `${cellSize}px` }}
                       />
                     );
                   }
@@ -246,12 +311,13 @@ export default function ContributionHeatmap({ heatmap = [] }) {
                     <button
                       key={entry.key}
                       type="button"
-                      className={`h-3 w-3 rounded-xs border border-white/5 transition-transform duration-100 hover:scale-125 ${LEVEL_CLASSES[entry.level]}`}
+                      className={`rounded-xs border border-white/5 transition-transform duration-100 hover:scale-110 ${LEVEL_CLASSES[entry.level]}`}
+                      style={{ height: `${cellSize}px`, width: `${cellSize}px` }}
                       onMouseEnter={(event) => handleMouseEnter(event, entry)}
                       onMouseLeave={handleMouseLeave}
                       onFocus={(event) => handleMouseEnter(event, entry)}
                       onBlur={handleMouseLeave}
-                      aria-label={`${entry.count} activities on ${tooltipDateFormatter.format(entry.dateObj)}`}
+                      aria-label={`${entry.count} reps on ${tooltipDateFormatter.format(entry.dateObj)}`}
                     />
                   );
                 })}

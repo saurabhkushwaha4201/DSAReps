@@ -65,11 +65,5 @@
       ],
       "js": ["contentScript.js"]
     }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": ["authSuccess.html", "authSuccess.js"],
-      "matches": ["https://accounts.google.com/*"]
-    }
   ]
 }
