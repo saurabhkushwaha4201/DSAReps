@@ -118,7 +118,7 @@ export default function Login() {
                                 <motion.div
                                     key="loading"
                                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                    className="w-full h-12.5ounded-full bg-blue-600/20 flex items-center justify-center gap-3 border border-blue-500/30"
+                                    className="w-full h-12.5 rounded-full bg-blue-600/20 flex items-center justify-center gap-3 border border-blue-500/30"
                                 >
                                     <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
                                     <span className="text-blue-100 text-sm font-semibold tracking-wide">Connecting...</span>
@@ -131,7 +131,7 @@ export default function Login() {
                                     // Hover animation for the container
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="w-full shadow-lg shadow-blue-900/20 rounded-full overflow-hidden"
+                                    className="w-full shadow-lg shadow-blue-900/20 rounded-full overflow-hidden flex justify-center"
                                 >
                                     <GoogleLogin
                                         onSuccess={handleSuccess}
@@ -139,7 +139,7 @@ export default function Login() {
                                         theme="filled_blue"
                                         shape="pill"
                                         size="large"
-                                        width="100%" // Ensures it fills the container
+                                        width="300"
                                         text="signin_with"
                                     />
                                 </motion.div>
