@@ -37,7 +37,9 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.send('DSA Revision Backend is running');
 });
-
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/problems', problemRoutes);
