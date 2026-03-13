@@ -32,10 +32,12 @@ const DashboardLayout = () => {
 
             <div className="flex flex-1">
                 <Sidebar />
-                <main className="flex-1 md:ml-64 px-4 py-6 md:p-8 overflow-y-auto mb-16 md:mb-0">
-                    <ErrorBoundary>
-                        <Outlet />
-                    </ErrorBoundary>
+                <main className="flex-1 md:ml-64 overflow-y-auto mb-16 md:mb-0">
+                    <div className="max-w-7xl mx-auto px-4 py-6 md:p-8">
+                        <ErrorBoundary>
+                            <Outlet />
+                        </ErrorBoundary>
+                    </div>
                 </main>
             </div>
 
