@@ -11,7 +11,7 @@ const STATES = {
     ERROR: 'state-error'
 };
 
-const DASHBOARD_URL = 'https://dsareps.vercel.app/dashboard'; // Update to your production URL
+const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || "http://localhost:5175";
 
 // State Variables
 let currentProblem = null;
