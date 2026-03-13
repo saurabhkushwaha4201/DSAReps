@@ -12,7 +12,7 @@ import { cpSync, mkdirSync, existsSync } from 'fs';
  * produce clean, predictable filenames.
  *
  * We only bundle JS entry points (content script + service worker).
- * HTML files (popup, auth-success) are copied as static assets.
+ * Popup HTML + JS are copied as static assets.
  */
 
 function copyExtensionAssets() {
@@ -42,15 +42,6 @@ function copyExtensionAssets() {
         resolve(dist, 'popup.js')
       );
 
-      // Copy auth-success HTML + JS
-      cpSync(
-        resolve(__dirname, 'src/background/auth-success.html'),
-        resolve(dist, 'authSuccess.html')
-      );
-      cpSync(
-        resolve(__dirname, 'src/background/auth-success.js'),
-        resolve(dist, 'authSuccess.js')
-      );
     },
   };
 }

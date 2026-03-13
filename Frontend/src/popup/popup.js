@@ -270,6 +270,7 @@ document.getElementById('save-form').addEventListener('submit', async (e) => {
 
     const difficulty = document.getElementById('difficulty').value;
     const notes = document.getElementById('notes').value;
+    const attemptSelect = document.getElementById('attempt-type');
 
     const btnSave = document.getElementById('btn-save');
     const msgDiv = document.getElementById('duplicate-msg');
@@ -285,7 +286,7 @@ document.getElementById('save-form').addEventListener('submit', async (e) => {
         url: currentProblem.url,
         difficulty: difficulty.toLowerCase(),
         notes: notes,
-        attemptType: attemptSelect ? attemptSelect.value : 'fresh',
+        attemptType: attemptSelect ? attemptSelect.value : 'solved',
         timeSpent: 0,
     };
 

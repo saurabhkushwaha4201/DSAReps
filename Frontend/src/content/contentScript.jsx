@@ -387,7 +387,7 @@ async function tryInjectAll() {
     await injectAndSync(config);
   } else if (isKnownHubPage(hostname, url)) {
     // ── Hub/Exploration Page: capsule only (same UI as problem page, no bookmark btn)
-    injectFloatingCapsule('problem');
+    injectFloatingCapsule('hub');
   }
 }
 
