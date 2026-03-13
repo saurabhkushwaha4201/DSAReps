@@ -349,7 +349,7 @@ export default function ProblemList() {
             {/* Rating Picker Modal */}
             {ratingTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setRatingTarget(null)}>
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 w-[420px] mx-4" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 w-105 mx-4" onClick={e => e.stopPropagation()}>
                         <div className="text-center mb-6">
                             <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                                 <span className="text-2xl">🧠</span>
