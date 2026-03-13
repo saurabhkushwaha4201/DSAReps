@@ -12,6 +12,7 @@
     "scripting",
     "alarms",
     "notifications",
+    "idle",
     "tabs"
   ],
 
