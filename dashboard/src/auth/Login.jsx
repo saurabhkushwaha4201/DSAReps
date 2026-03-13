@@ -118,7 +118,7 @@ export default function Login() {
                                 <motion.div
                                     key="loading"
                                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                    className="w-full h-[3.125rem] rounded-full bg-blue-600/20 flex items-center justify-center gap-3 border border-blue-500/30"
+                                    className="w-full h-12.5 rounded-full bg-blue-600/20 flex items-center justify-center gap-3 border border-blue-500/30"
                                 >
                                     <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
                                     <span className="text-blue-100 text-sm font-semibold tracking-wide">Connecting...</span>

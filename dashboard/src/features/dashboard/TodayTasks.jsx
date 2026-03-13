@@ -144,7 +144,7 @@ export default function TodayTasks() {
           </button>
         </div>
       ) : (
-        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
+        <div className="space-y-3 max-h-105 overflow-y-auto pr-1 custom-scrollbar">
           {tasks.map((task) => {
             const reviewInfo = REVIEW_TYPE_LABEL[task.nextReviewType] || {
               label: 'Review',
@@ -188,7 +188,7 @@ export default function TodayTasks() {
                   {/* Review type — Radix tooltip */}
                   <Tooltip.Root>
                     <Tooltip.Trigger asChild>
-                      <span className={`cursor-help flex items-center gap-1 border-b border-dashed pb-[1px] ${reviewInfo.color} border-current`}>
+                      <span className={`cursor-help flex items-center gap-1 border-b border-dashed pb-px ${reviewInfo.color} border-current`}>
                         <Icon className="w-3 h-3" />
                         {reviewInfo.label}
                       </span>
@@ -207,7 +207,7 @@ export default function TodayTasks() {
                   {/* Stability — Radix tooltip */}
                   <Tooltip.Root>
                     <Tooltip.Trigger asChild>
-                      <span className="cursor-help border-b border-dashed border-slate-400/50 pb-[1px]">
+                      <span className="cursor-help border-b border-dashed border-slate-400/50 pb-px">
                         Stability: {task.stabilityScore}%
                       </span>
                     </Tooltip.Trigger>
