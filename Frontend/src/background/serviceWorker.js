@@ -3,9 +3,11 @@ import AuthService from "./auth.service.js";
 console.log("[BG] Service Worker Loaded");
 
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "https://extension-backend-mlcm.onrender.com/";
+const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || "https://extension-backend-mlcm.onrender.com").replace(/\/$/, "");
 const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || "http://localhost:5175";
 const DIGEST_STATE_KEY = "dailyDigestState";
+const INTERVALS_CACHE_KEY = "revisionIntervalsCache";
+const DEFAULT_INTERVALS = { hard: 1, medium: 3, easy: 5 };
 
 function getTodayKey(date = new Date()) {
   const y = date.getFullYear();
@@ -406,12 +408,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // ── Fetch user's revision intervals so popup/content can show correct labels ──
   if (message.type === "GET_INTERVALS") {
     apiFetch("/api/user/settings")
-      .then((data) => {
-        const intervals = data?.settings?.revisionIntervals || { hard: 1, medium: 3, easy: 5 };
-        sendResponse({ intervals });
+      .then(async (data) => {
+        const intervals = data?.settings?.revisionIntervals || DEFAULT_INTERVALS;
+        await chrome.storage.local.set({ [INTERVALS_CACHE_KEY]: intervals });
+        sendResponse({ intervals, source: "api" });
       })
-      .catch(() => {
-        sendResponse({ intervals: { hard: 1, medium: 3, easy: 5 } });
+      .catch(async () => {
+        const cached = await chrome.storage.local.get([INTERVALS_CACHE_KEY]);
+        sendResponse({
+          intervals: cached?.[INTERVALS_CACHE_KEY] || DEFAULT_INTERVALS,
+          source: cached?.[INTERVALS_CACHE_KEY] ? "cache" : "default",
+        });
       });
     return true;
   }

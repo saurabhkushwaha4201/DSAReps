@@ -173,7 +173,7 @@ export default function ContributionHeatmap({ heatmap = [] }) {
   const cellSize = useMemo(() => {
     if (!gridWidth || !weekCount) return 12;
     const size = (gridWidth - (weekCount - 1) * CELL_GAP) / weekCount;
-    return Math.min(14, Math.max(10, size));
+    return Math.min(22, Math.max(10, size));
   }, [gridWidth, weekCount]);
 
   const gridStep = cellSize + CELL_GAP;
