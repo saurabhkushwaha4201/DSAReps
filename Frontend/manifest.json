@@ -21,7 +21,8 @@
     "*://codeforces.com/*",
     "*://cses.fi/*",
     "*://www.geeksforgeeks.org/*",
-    "*://practice.geeksforgeeks.org/*"
+    "*://practice.geeksforgeeks.org/*",
+    "https://extension-backend-mlcm.onrender.com/*"
   ],
 
   "background": {
