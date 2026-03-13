@@ -21,6 +21,9 @@ app.use(
       // allow requests without origin (mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true);
 
+      // allow Chrome extension service workers (origin = chrome-extension://<id>)
+      if (origin.startsWith('chrome-extension://')) return callback(null, true);
+
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }

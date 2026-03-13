@@ -6,13 +6,6 @@ import toast from 'react-hot-toast';
 import { getAllProblems, archiveProblem, unarchiveProblem, reviseProblem } from '../../api/problem.api';
 import { Loader2, ChevronDown, Plus } from 'lucide-react';
 
-// --- MOCK DATA (Fallback) ---
-const INITIAL_PROBLEMS = [
-    { _id: '1', title: "Two Sum", difficulty: "Easy", platform: "LeetCode", nextReviewDate: new Date(Date.now() - 86400000).toISOString(), status: 'active' },
-    { _id: '2', title: "LRU Cache", difficulty: "Medium", platform: "LeetCode", nextReviewDate: new Date().toISOString(), status: 'active' },
-    { _id: '3', title: "Merge K Lists", difficulty: "Hard", platform: "LeetCode", nextReviewDate: new Date(Date.now() + 86400000).toISOString(), status: 'active' },
-];
-
 export default function ProblemList() {
     const [problems, setProblems] = useState([]);
     const [activeFilter, setActiveFilter] = useState('All');
@@ -59,7 +52,7 @@ export default function ProblemList() {
             const hasMoreData = data.hasMore !== undefined ? data.hasMore : false;
 
             if (pageNum === 1) {
-                setProblems(problemsData.length > 0 ? problemsData : INITIAL_PROBLEMS);
+                setProblems(problemsData);
             } else {
                 setProblems(prev => [...prev, ...problemsData]);
             }
@@ -69,7 +62,7 @@ export default function ProblemList() {
         } catch (e) {
             console.error(e);
             if (pageNum === 1) {
-                setProblems(INITIAL_PROBLEMS);
+                setProblems([]);
             }
             toast.error('Failed to load problems');
         } finally {
@@ -297,8 +290,26 @@ export default function ProblemList() {
                             />
                         ))}
                     </>
+                ) : problems.length === 0 && view === 'active' ? (
+                    /* True empty state - no problems added yet */
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <div className="w-20 h-20 mb-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                            <span className="text-4xl">📭</span>
+                        </div>
+                        <h3 className="text-xl font-semibold text-slate-800 dark:text-white mb-2">You have 0 problems</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mb-6">
+                            Start tracking your DSA practice by adding your first problem.
+                        </p>
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add your first problem
+                        </button>
+                    </div>
                 ) : view === 'active' ? (
-                    /* Head Start Section - Only for Active view when empty */
+                    /* Head Start Section - Active problems exist but none match filter */
                     <HeadStartSection problems={problems} onOpenNotes={handleOpenNotes} onMarkRevised={handleMarkRevised} />
                 ) : (
                     <div className="text-center py-12 text-slate-500 dark:text-slate-400">

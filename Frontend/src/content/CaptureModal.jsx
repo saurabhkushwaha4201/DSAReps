@@ -97,12 +97,15 @@ const STYLES = `
 
   .diff-btn.hard { border-color: #f38ba8; color: #f38ba8; }
   .diff-btn.hard:hover { background: rgba(243, 139, 168, 0.15); }
+  .diff-btn.hard.selected { background: rgba(243, 139, 168, 0.25); box-shadow: 0 0 0 2px #f38ba8; }
 
   .diff-btn.medium { border-color: #fab387; color: #fab387; }
   .diff-btn.medium:hover { background: rgba(250, 179, 135, 0.15); }
+  .diff-btn.medium.selected { background: rgba(250, 179, 135, 0.25); box-shadow: 0 0 0 2px #fab387; }
 
   .diff-btn.easy { border-color: #a6e3a1; color: #a6e3a1; }
   .diff-btn.easy:hover { background: rgba(166, 227, 161, 0.15); }
+  .diff-btn.easy.selected { background: rgba(166, 227, 161, 0.25); box-shadow: 0 0 0 2px #a6e3a1; }
 
   .diff-btn .interval {
     font-size: 11px;
@@ -142,6 +145,24 @@ const STYLES = `
 
   .cancel-btn:hover { color: #cdd6f4; }
 
+  .save-btn {
+    width: 100%;
+    padding: 11px;
+    border: none;
+    border-radius: 10px;
+    background: #6366f1;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+    margin-bottom: 8px;
+  }
+
+  .save-btn:hover:not(:disabled) { background: #4f46e5; }
+  .save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
   .status-msg {
     text-align: center;
     padding: 20px;
@@ -156,6 +177,7 @@ export default function CaptureModal({ problemDetails, onClose }) {
   const [coreTrick, setCoreTrick] = useState('');
   const [status, setStatus] = useState(null); // null | 'saving' | 'success' | 'error' | 'duplicate'
   const [intervals, setIntervals] = useState({ hard: 1, medium: 3, easy: 5 });
+  const [selectedDifficulty, setSelectedDifficulty] = useState(null);
 
   // Fetch user's revision intervals so labels stay in sync with dashboard settings
   useEffect(() => {
@@ -242,15 +264,24 @@ export default function CaptureModal({ problemDetails, onClose }) {
 
               <span className="label">Difficulty?</span>
               <div className="difficulty-grid">
-                <button className="diff-btn hard" onClick={() => handleSave('hard')}>
+                <button
+                  className={`diff-btn hard${selectedDifficulty === 'hard' ? ' selected' : ''}`}
+                  onClick={() => setSelectedDifficulty('hard')}
+                >
                   Hard
                   <span className="interval">Review in {intervals.hard}d</span>
                 </button>
-                <button className="diff-btn medium" onClick={() => handleSave('medium')}>
+                <button
+                  className={`diff-btn medium${selectedDifficulty === 'medium' ? ' selected' : ''}`}
+                  onClick={() => setSelectedDifficulty('medium')}
+                >
                   Medium
                   <span className="interval">Review in {intervals.medium}d</span>
                 </button>
-                <button className="diff-btn easy" onClick={() => handleSave('easy')}>
+                <button
+                  className={`diff-btn easy${selectedDifficulty === 'easy' ? ' selected' : ''}`}
+                  onClick={() => setSelectedDifficulty('easy')}
+                >
                   Easy
                   <span className="interval">Review in {intervals.easy}d</span>
                 </button>
@@ -265,9 +296,18 @@ export default function CaptureModal({ problemDetails, onClose }) {
                 onChange={(e) => setCoreTrick(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') onClose(false);
+                  if (e.key === 'Enter' && selectedDifficulty) handleSave(selectedDifficulty);
                 }}
                 autoFocus
               />
+
+              <button
+                className="save-btn"
+                disabled={!selectedDifficulty}
+                onClick={() => handleSave(selectedDifficulty)}
+              >
+                Save
+              </button>
 
               <button className="cancel-btn" onClick={() => onClose(false)}>
                 Cancel (Esc)
