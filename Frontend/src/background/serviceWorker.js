@@ -225,7 +225,7 @@ async function fireDailyDigest(reason = "manual") {
 
     chrome.notifications.create("dailyDigest", {
       type: "basic",
-      iconUrl: "icons/icon128.png",
+      iconUrl: "icons/icon-128.png",
       title: `${greeting}! Ready to code? 💻`,
       message: `We've queued up ${count} problem${count !== 1 ? "s" : ""} for you to review today. Let's get it done!`,
       priority: 1,
