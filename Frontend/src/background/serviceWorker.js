@@ -5,6 +5,75 @@ console.log("[BG] Service Worker Loaded");
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "https://extension-backend-mlcm.onrender.com/";
 const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || "http://localhost:5175";
+const DIGEST_STATE_KEY = "dailyDigestState";
+
+function getTodayKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function parseNotifTime(notifTime = "09:00", now = new Date()) {
+  const [hours, minutes] = String(notifTime).split(":").map(Number);
+  const target = new Date(now);
+  target.setHours(Number.isFinite(hours) ? hours : 9, Number.isFinite(minutes) ? minutes : 0, 0, 0);
+  return target;
+}
+
+async function getDigestState() {
+  const data = await chrome.storage.local.get(DIGEST_STATE_KEY);
+  return data?.[DIGEST_STATE_KEY] || {};
+}
+
+async function markDigestSent(meta = {}) {
+  await chrome.storage.local.set({
+    [DIGEST_STATE_KEY]: {
+      lastSentDateKey: getTodayKey(),
+      lastSentAt: Date.now(),
+      ...meta,
+    },
+  });
+}
+
+async function alreadySentToday() {
+  const state = await getDigestState();
+  return state.lastSentDateKey === getTodayKey();
+}
+
+async function getNotificationSettings(enabled, time) {
+  let notifEnabled = enabled;
+  let notifTime = time;
+
+  if (notifEnabled === undefined) {
+    const isAuth = await AuthService.isAuthenticated();
+    if (!isAuth) return { enabled: false, time: "09:00" };
+    const data = await apiFetch("/api/user/settings");
+    notifEnabled = data?.settings?.notificationEnabled;
+    notifTime = data?.settings?.notificationTime || "09:00";
+  }
+
+  return { enabled: !!notifEnabled, time: notifTime || "09:00" };
+}
+
+async function maybeFireMissedDigest(trigger = "startup") {
+  try {
+    const { enabled, time } = await getNotificationSettings();
+    if (!enabled) return;
+
+    const now = new Date();
+    const target = parseNotifTime(time, now);
+
+    // Only attempt catch-up once today's configured time has passed.
+    if (now < target) return;
+
+    if (await alreadySentToday()) return;
+
+    await fireDailyDigest(`catchup:${trigger}`);
+  } catch (err) {
+    console.warn("[BG] maybeFireMissedDigest failed:", err.message);
+  }
+}
 
 /* 
    BADGE MANAGEMENT
@@ -61,13 +130,29 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     scheduleDigestAlarm(); // Re-read settings in case they changed
   }
   if (alarm.name === "dailyDigest") {
-    fireDailyDigest();
+    fireDailyDigest("alarm");
   }
 });
 
 // Refresh badge and set up digest alarm on service worker startup
 fetchAndUpdateBadge();
 scheduleDigestAlarm();
+maybeFireMissedDigest("service-worker-start");
+
+// When browser starts, re-check missed digest delivery.
+chrome.runtime.onStartup.addListener(() => {
+  fetchAndUpdateBadge();
+  scheduleDigestAlarm();
+  maybeFireMissedDigest("runtime-startup");
+});
+
+// Catch-up trigger when system becomes active after idle/locked.
+chrome.idle.setDetectionInterval(60);
+chrome.idle.onStateChanged.addListener((state) => {
+  if (state === "active") {
+    maybeFireMissedDigest("idle-active");
+  }
+});
 
 /* ===============================
    DAILY DIGEST NOTIFICATIONS
@@ -124,10 +209,12 @@ function getDynamicGreeting() {
   return "Good Evening";
 }
 
-async function fireDailyDigest() {
+async function fireDailyDigest(reason = "manual") {
   try {
     const isAuth = await AuthService.isAuthenticated();
     if (!isAuth) return;
+
+    if (await alreadySentToday()) return;
 
     const data = await apiFetch("/api/problems/today");
     const count = data?.problems?.length || 0;
@@ -143,6 +230,8 @@ async function fireDailyDigest() {
       message: `We've queued up ${count} problem${count !== 1 ? "s" : ""} for you to review today. Let's get it done!`,
       priority: 1,
     });
+
+    await markDigestSent({ reason, count });
   } catch (err) {
     console.warn("[BG] fireDailyDigest failed:", err.message);
   }
@@ -167,6 +256,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     AuthService.isAuthenticated().then((isAuthenticated) => {
       sendResponse({ isAuthenticated });
     });
+    return true;
+  }
+
+  // Open dashboard via background so popup doesn't need hardcoded/env-injected URL logic
+  if (message.type === "OPEN_DASHBOARD") {
+    chrome.tabs.create({ url: `${DASHBOARD_URL}/dashboard` })
+      .then(() => sendResponse({ success: true }))
+      .catch((err) => {
+        console.error("[BG] Open dashboard error:", err);
+        sendResponse({ success: false });
+      });
     return true;
   }
 
@@ -285,6 +385,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // ── Instantly reschedule digest alarm when user saves settings ──
   if (message.type === "UPDATE_ALARM") {
     scheduleDigestAlarm(message.notifEnabled, message.notifTime);
+    // If user enables/updates reminder after the configured time, deliver catch-up now.
+    maybeFireMissedDigest("settings-update");
     sendResponse({ success: true });
     return true;
   }
