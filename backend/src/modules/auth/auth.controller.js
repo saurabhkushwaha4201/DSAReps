@@ -16,8 +16,20 @@ const generateToken = (user) => {
 /**
  * Create OAuth client per request (IMPORTANT)
  */
-const createOAuthClient = () => {
-  const callbackUrl = process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback';
+const getRequestOrigin = (req) => {
+  const forwardedProto = req.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  const forwardedHost = req.get('x-forwarded-host')?.split(',')[0]?.trim();
+  const protocol = forwardedProto || req.protocol || 'https';
+  const host = forwardedHost || req.get('host');
+  return `${protocol}://${host}`;
+};
+
+const resolveCallbackUrl = (req) => {
+  if (process.env.GOOGLE_CALLBACK_URL) return process.env.GOOGLE_CALLBACK_URL;
+  return `${getRequestOrigin(req)}/api/auth/google/callback`;
+};
+
+const createOAuthClient = (callbackUrl) => {
   return new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
@@ -33,7 +45,8 @@ const initiateGoogleLogin = (req, res) => {
   const source = req.query.source || 'web';
   const redirectUri = req.query.redirect_uri || null;
 
-  const oauthClient = createOAuthClient();
+  const callbackUrl = resolveCallbackUrl(req);
+  const oauthClient = createOAuthClient(callbackUrl);
   console.log('HIT /auth/google');
 
   const authorizeUrl = oauthClient.generateAuthUrl({
@@ -57,7 +70,8 @@ const googleCallback = async (req, res) => {
   console.log('[Backend] Google Callack Hit. Code present:', !!code, 'State:', state);
 
   try {
-    const oauthClient = createOAuthClient();
+    const callbackUrl = resolveCallbackUrl(req);
+    const oauthClient = createOAuthClient(callbackUrl);
 
     // Exchange auth code for tokens
     const { tokens } = await oauthClient.getToken(code);
@@ -167,7 +181,9 @@ const googleAuth = async (req, res) => {
   }
 
   try {
-    const oauthClient = createOAuthClient();
+    const oauthClient = new OAuth2Client(
+      process.env.GOOGLE_CLIENT_ID
+      );
 
     const ticket = await oauthClient.verifyIdToken({
       idToken: credential,
