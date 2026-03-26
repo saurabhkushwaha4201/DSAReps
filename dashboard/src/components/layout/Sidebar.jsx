@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, List, LogOut, User, Moon, Sun, Settings, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, List, LogOut, Moon, Sun, Settings, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../ui/Button';
 import { twMerge } from 'tailwind-merge';
@@ -12,6 +12,12 @@ const Sidebar = () => {
     const { user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const [feedbackOpen, setFeedbackOpen] = useState(false);
+    const [failedAvatarSrc, setFailedAvatarSrc] = useState(null);
+
+    const profileImage = user?.picture || user?.avatar;
+    const canShowProfileImage = Boolean(profileImage) && failedAvatarSrc !== profileImage;
+    const profileInitial = user?.firstName?.[0] || user?.name?.[0] || 'U';
+    const displayName = user?.firstName || user?.name || 'User';
 
     const navItems = [
         { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -79,12 +85,22 @@ const Sidebar = () => {
 
                 <div className="p-4 border-t border-slate-200 dark:border-slate-800">
                     <div className="flex items-center gap-3 mb-4 px-2">
-                        <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold">
-                            {user?.name?.[0] || <User className="w-5 h-5" />}
-                        </div>
+                        {canShowProfileImage ? (
+                            <img
+                                src={profileImage}
+                                alt={`${displayName} profile picture`}
+                                className="w-10 h-10 rounded-full object-cover border border-slate-300 dark:border-slate-700"
+                                referrerPolicy="no-referrer"
+                                onError={() => setFailedAvatarSrc(profileImage)}
+                            />
+                        ) : (
+                            <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold">
+                                {profileInitial.toUpperCase()}
+                            </div>
+                        )}
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-slate-900 dark:text-slate-200 truncate">
-                                {user?.name || 'User'}
+                                {displayName}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-500 truncate">
                                 {user?.email || 'user@example.com'}

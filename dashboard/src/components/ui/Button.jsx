@@ -2,6 +2,7 @@ import * as React from "react"
 import { cva } from "class-variance-authority"
 import { twMerge } from 'tailwind-merge'
 import { clsx } from 'clsx'
+import { motion } from 'framer-motion'
 
 const buttonVariants = cva(
     "inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-white",
@@ -30,9 +31,9 @@ const buttonVariants = cva(
 )
 
 const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? "span" : "button"
+    const Comp = asChild ? motion.span : motion.button
     return (
-        <motion.button
+        <Comp
             whileTap={{ scale: 0.95 }}
             className={twMerge(clsx(buttonVariants({ variant, size, className })))}
             ref={ref}
