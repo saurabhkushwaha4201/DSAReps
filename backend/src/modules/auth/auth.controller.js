@@ -19,32 +19,23 @@ const generateToken = (user) => {
 };
 
 const upsertGoogleUser = async ({ googleId, email, name, avatar }) => {
-  const existingUser = await User.findOne({ googleId });
+  const user = await User.findOneAndUpdate(
+    { googleId },
+    {
+      $set: {
+        googleId,
+        email,
+        name,
+        avatar,
+      },
+    },
+    {
+      new: true,
+      upsert: true,
+    }
+  );
 
-  if (!existingUser) {
-    return User.create({
-      googleId,
-      email,
-      name,
-      avatar,
-    });
-  }
-
-  const shouldUpdate =
-    existingUser.email !== email ||
-    existingUser.name !== name ||
-    existingUser.avatar !== avatar;
-
-  if (!shouldUpdate) {
-    return existingUser;
-  }
-
-  existingUser.email = email;
-  existingUser.name = name;
-  existingUser.avatar = avatar;
-  await existingUser.save();
-
-  return existingUser;
+  return user;
 };
 
 /**
