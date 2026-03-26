@@ -143,17 +143,38 @@ Use the following as a starter checklist.
 
 ## 📸 Screenshots
 
-### Dashboard
+### 🖥️ Dashboard Overview
+_Main dashboard showing progress, stats, and revision insights._
 
-- _Add dashboard home screenshot here (e.g., tasks, heatmap, weak clusters)._ 
-
-### Extension Popup
-
-- _Add extension popup screenshot here (save problem + revision controls)._ 
-
-> Replace placeholders with actual screenshots before publishing.
+![Dashboard](./docs/dashboard.png)
 
 ---
+
+### 🔥 Activity Heatmap
+_Visual representation of consistency and revision frequency._
+
+![Heatmap](./docs/heatmap.png)
+
+---
+
+### 📅 Daily Revision Queue
+_Today’s scheduled problems based on spaced repetition._
+
+![Tasks](./docs/tasks.png)
+
+---
+
+### 🧩 Chrome Extension Popup
+_Save problems directly while browsing coding platforms._
+
+![Extension](./docs/extension.png)
+
+---
+
+### 🔄 Problem Capture Flow
+_Capture a problem via extension and see it reflected in the dashboard._
+
+![Flow](./docs/flow.png)
 
 ## 🤝 Contributing
 
