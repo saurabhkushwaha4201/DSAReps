@@ -16,7 +16,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom', 'axios'],
-          ui: ['lucide-react', 'date-fns', 'recharts']
+          ui: ['lucide-react', 'date-fns']
         }
       }
     }

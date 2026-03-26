@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
         } else {
           setToken(storedToken);
         }
-      } catch (e) {
+      } catch (_e) {
         localStorage.removeItem("token");
         setToken(null);
       }
@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
   const user = token ? (() => {
     try {
       return JSON.parse(atob(token.split('.')[1]));
-    } catch (e) { return null; }
+    } catch (_e) { return null; }
   })() : null;
 
   const value = {
