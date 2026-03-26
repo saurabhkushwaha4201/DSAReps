@@ -88,7 +88,7 @@ const Sidebar = () => {
                         {canShowProfileImage ? (
                             <img
                                 src={profileImage}
-                                alt="User Profile"
+                                alt={`${displayName} profile picture`}
                                 className="w-10 h-10 rounded-full object-cover border border-slate-300 dark:border-slate-700"
                                 referrerPolicy="no-referrer"
                                 onError={() => setFailedAvatarSrc(profileImage)}
