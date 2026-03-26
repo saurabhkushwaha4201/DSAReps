@@ -18,6 +18,8 @@ export default function Login() {
 
         if (redirectError) {
             toast.error('Authentication failed. Please try again.');
+            navigate('/login', { replace: true });
+            return;
         }
 
         if (!redirectToken) {
