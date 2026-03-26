@@ -1,6 +1,7 @@
 import * as React from "react"
 import { cva } from "class-variance-authority"
-import { cn } from "../../utils/cn"
+import { twMerge } from 'tailwind-merge'
+import { clsx } from 'clsx'
 
 const buttonVariants = cva(
     "inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-white",
@@ -33,7 +34,7 @@ const Button = React.forwardRef(({ className, variant, size, asChild = false, ..
     return (
         <motion.button
             whileTap={{ scale: 0.95 }}
-            className={cn(buttonVariants({ variant, size, className }))}
+            className={twMerge(clsx(buttonVariants({ variant, size, className })))}
             ref={ref}
             {...props}
         />

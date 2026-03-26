@@ -3,7 +3,8 @@ import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, List, LogOut, User, Moon, Sun, Settings, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../ui/Button';
-import { cn } from '../../utils/cn';
+import { twMerge } from 'tailwind-merge';
+import { clsx } from 'clsx';
 import { useTheme } from '../../hooks/useTheme';
 import FeedbackModal from '../common/FeedbackModal';
 
@@ -45,12 +46,12 @@ const Sidebar = () => {
                         <NavLink
                             key={item.path}
                             to={item.path}
-                            className={({ isActive }) => cn(
+                            className={({ isActive }) => twMerge(clsx(
                                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
                                 isActive
                                     ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
                                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
-                            )}
+                            ))}
                         >
                             <item.icon className="w-5 h-5" />
                             {item.label}
@@ -63,12 +64,12 @@ const Sidebar = () => {
                         <NavLink
                             key={item.path}
                             to={item.path}
-                            className={({ isActive }) => cn(
+                            className={({ isActive }) => twMerge(clsx(
                                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
                                 isActive
                                     ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
                                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
-                            )}
+                            ))}
                         >
                             <item.icon className="w-5 h-5" />
                             {item.label}
@@ -132,12 +133,12 @@ const Sidebar = () => {
                     <NavLink
                         key={item.path}
                         to={item.path}
-                        className={({ isActive }) => cn(
+                        className={({ isActive }) => twMerge(clsx(
                             "flex flex-col items-center justify-center px-3 py-2 rounded-xl text-xs font-medium transition-all",
                             isActive
                                 ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
                                 : "text-slate-500 dark:text-slate-400"
-                        )}
+                        ))}
                     >
                         <item.icon className="w-5 h-5 mb-0.5" />
                         <span className="text-[10px]">{item.label}</span>
