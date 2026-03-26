@@ -1,9 +1,10 @@
-import { cn } from "../../utils/cn"
+import { twMerge } from 'tailwind-merge'
+import { clsx } from 'clsx'
 
 function Skeleton({ className, ...props }) {
     return (
         <div
-            className={cn("animate-pulse rounded-md bg-slate-200", className)}
+            className={twMerge(clsx("animate-pulse rounded-md bg-slate-200", className))}
             {...props}
         />
     )
