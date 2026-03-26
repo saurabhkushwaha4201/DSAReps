@@ -7,10 +7,44 @@ const User = require('../users/user.model');
  */
 const generateToken = (user) => {
   return jwt.sign(
-    { userId: user._id, email: user.email },
+    {
+      userId: user._id,
+      email: user.email,
+      name: user.name,
+      avatar: user.avatar,
+    },
     process.env.JWT_SECRET,
     { expiresIn: '30d' }
   );
+};
+
+const upsertGoogleUser = async ({ googleId, email, name, avatar }) => {
+  const existingUser = await User.findOne({ googleId });
+
+  if (!existingUser) {
+    return User.create({
+      googleId,
+      email,
+      name,
+      avatar,
+    });
+  }
+
+  const shouldUpdate =
+    existingUser.email !== email ||
+    existingUser.name !== name ||
+    existingUser.avatar !== avatar;
+
+  if (!shouldUpdate) {
+    return existingUser;
+  }
+
+  existingUser.email = email;
+  existingUser.name = name;
+  existingUser.avatar = avatar;
+  await existingUser.save();
+
+  return existingUser;
 };
 
 /**
@@ -94,17 +128,8 @@ const googleCallback = async (req, res) => {
 
     console.log('[Backend] Authenticated User:', email);
 
-    // Find or create user
-    let user = await User.findOne({ googleId });
-    if (!user) {
-      console.log('[Backend] Creating new user');
-      user = await User.create({
-        googleId,
-        email,
-        name,
-        avatar,
-      });
-    }
+    // Find, create, or refresh user profile fields
+    const user = await upsertGoogleUser({ googleId, email, name, avatar });
 
     // Generate backend JWT
     const token = generateToken(user);
@@ -198,16 +223,8 @@ const googleAuth = async (req, res) => {
       picture: avatar,
     } = payload;
 
-    // Find or create user
-    let user = await User.findOne({ googleId });
-    if (!user) {
-      user = await User.create({
-        googleId,
-        email,
-        name,
-        avatar,
-      });
-    }
+    // Find, create, or refresh user profile fields
+    const user = await upsertGoogleUser({ googleId, email, name, avatar });
 
     // Issue backend JWT
     const token = generateToken(user);

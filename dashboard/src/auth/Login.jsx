@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from './AuthContext';
 import { useNavigate, Navigate } from 'react-router-dom';
@@ -7,9 +7,34 @@ import toast from 'react-hot-toast';
 import sendTokenToExtension from '../utils/sendToken';
 
 export default function Login() {
-    const { login, isAuthenticated } = useAuth();
+    const { login, isAuthenticated, setAuthFromToken } = useAuth();
     const navigate = useNavigate();
     const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const redirectToken = params.get('token');
+        const redirectError = params.get('error');
+
+        if (redirectError) {
+            toast.error('Authentication failed. Please try again.');
+        }
+
+        if (!redirectToken) {
+            return;
+        }
+
+        setAuthFromToken(redirectToken);
+        window.postMessage(
+            {
+                source: "DSA_DASHBOARD",
+                type: "AUTH_SET_TOKEN",
+                token: redirectToken,
+            },
+            "*"
+        );
+        navigate('/', { replace: true });
+    }, [navigate, setAuthFromToken]);
 
     // Redirect if already logged in
     if (isAuthenticated) {
