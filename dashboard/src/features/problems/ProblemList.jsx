@@ -129,7 +129,7 @@ export default function ProblemList() {
         try {
             await reviseProblem(id, rating);
             toast.success(`Marked as revised (${rating.toLowerCase()})`)
-        } catch (err) {
+        } catch {
             toast.error('Failed to save revision');
         }
     };

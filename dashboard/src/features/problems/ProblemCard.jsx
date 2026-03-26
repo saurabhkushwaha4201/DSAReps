@@ -41,9 +41,6 @@ export default function ProblemCard({ problem, onMarkRevised, onArchive, onResto
     const hasNotes = !!(problem.notes && problem.notes.trim());
     const isPinned = problem.isManualOverride;
 
-    const today = new Date().toISOString().split('T')[0];
-    const maxDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
     const handleReschedule = async (date) => {
         setRescheduling(true);
         try {
