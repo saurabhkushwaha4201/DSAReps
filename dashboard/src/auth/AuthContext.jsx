@@ -5,14 +5,30 @@ const AuthContext = createContext(null);
 const TOKEN_STORAGE_KEY = "token";
 const USER_STORAGE_KEY = "authUser";
 
+const base64UrlToUint8Array = (base64Url) => {
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+  const binaryString = atob(padded);
+  const bytes = new Uint8Array(binaryString.length);
+
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  return bytes;
+};
+
 const decodeJwtPayload = (token) => {
   if (!token) return null;
 
   try {
     const payloadSegment = token.split('.')[1];
-    const base64 = payloadSegment.replace(/-/g, '+').replace(/_/g, '/');
-    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
-    return JSON.parse(atob(padded));
+    if (!payloadSegment) return null;
+
+    const bytes = base64UrlToUint8Array(payloadSegment);
+    const decodedString = new TextDecoder('utf-8').decode(bytes);
+
+    return JSON.parse(decodedString);
   } catch {
     return null;
   }
