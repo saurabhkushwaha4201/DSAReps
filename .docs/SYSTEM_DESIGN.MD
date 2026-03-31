@@ -40,10 +40,11 @@ The backend acts as the central source of truth, handling OAuth, problem ingesti
 
 ### Problems & Spaced Repetition
 
-- `POST /api/problems` - Captures a new problem from the extension.
+- `POST /api/problems` - Captures a new problem from the extension. If the same URL was previously soft-deleted or archived, it is restored to active.
 - `GET /api/problems` - Retrieves paginated problem history.
-- `POST /api/revisions` - Submits a rating (CLEAN, SLOW, FORGOT) and recalculates the stabilityScore and nextReviewDate.
+- `POST /api/problems/:id/revise` - Submits a rating (CLEAN, SLOW, FORGOT) and recalculates the stabilityScore and nextReviewDate.
 - `PATCH /api/problems/:id/archive` - Archives mastered/irrelevant problems.
+- `DELETE /api/problems/:id` - Soft-deletes a problem from active tracking (record remains in DB and can be restored by tracking the same URL again).
 
 ### Dashboard Analytics
 
@@ -87,6 +88,12 @@ When the dashboard requests today's tasks, the backend runs a 2-Phase selection:
 
 - **Phase A (Manual Overrides)**: Priority 1. Fetches any problems the user explicitly pinned for today. Bypasses daily caps.
 - **Phase B (Algorithmic Picks)**: Priority 2. Queries regular problems where `nextReviewDate <= today`. Fills remaining slots up to the user's daily cap, sorted by **lowest stability score first** (weakest problems surface first).
+
+### Soft Delete and Restore Semantics
+
+- Remove actions from extension/dashboard use soft delete (`isDeleted: true`) so accidental removals are reversible.
+- Re-tracking the same URL does not create a duplicate record; the backend restores the existing problem to active state and returns a restore-aware response.
+- Problem list queries exclude soft-deleted records and are sorted by latest update so restored items become visible immediately.
 
 ## 4. 🗄️ Core Database Schema (MongoDB)
 
@@ -189,7 +196,7 @@ sequenceDiagram
 
   Note over User,DB: Phase 3: Spaced Repetition Update
   User->>Dash: Re-solves problem & clicks "CLEAN" rating
-  Dash->>API: POST /api/revisions { problemId, rating: 'CLEAN' }
+  Dash->>API: POST /api/problems/{id}/revise { rating: 'CLEAN' }
   API->>API: Algorithm: Apply 2.5x multiplier, then round interval to whole days (e.g., Math.round)
   API->>DB: Update (stability: 50, nextReview: +3 days, rounded from 2.5)
   DB-->>API: Success (New RevisionLog entry created)
