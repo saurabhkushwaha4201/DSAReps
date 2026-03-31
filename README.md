@@ -120,7 +120,7 @@ DSAReps is built as a three-layer system where data flows from the browser to th
 
 > 🧠 **Under the Hood: Technical Highlights** <br>
 > DSAReps is engineered to handle complex state, background processing, and accurate data tracking. Want to see the Spaced Repetition math, Shadow DOM isolation, Chrome Service Worker lifecycles, and our Daily Triage algorithm? <br>
-> 👉 **[Read the comprehensive System Design & Architecture Deep Dive](./docs/SYSTEM_DESIGN.md)**
+> 👉 **[Read the comprehensive System Design & Architecture Deep Dive](./.docs/SYSTEM_DESIGN.MD)**
 
 ---
 
