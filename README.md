@@ -41,7 +41,7 @@ DSAReps addresses this by introducing a spaced-repetition-based workflow for DSA
 
 ## ✨ Core Features
 
-- **⚡ 1-Click Capture:** Save problems instantly from platforms like LeetCode and Codeforces using the Chrome Extension.
+- **⚡ 1-Click Capture:** Save problems instantly from platforms like LeetCode, Codeforces, CSES, and GeeksForGeeks using the Chrome Extension.
 
 - **🧠 Spaced Repetition Engine:** Automatically schedules revisions so problems are revisited at the right time for long-term retention.
 
@@ -124,14 +124,17 @@ DSAReps is built as a three-layer system where data flows from the browser to th
 
 ## 🗂️ Project Structure
 
-```
 .
 ├── Frontend/
 │   └── Chrome Extension (Manifest V3) for capturing problems and managing revision actions.
 ├── dashboard/
 │   └── React + Vite web dashboard for analytics, task views, settings, and exports.
-└── backend/
-        └── Node.js + Express API with MongoDB for auth, problems, revisions, and user settings.
+├── backend/
+│   └── Node.js + Express API with MongoDB for auth, problems, revisions, and user settings.
+└── docs/
+    ├── system-design.md
+    └── assets
+
 ```
 
 ---
