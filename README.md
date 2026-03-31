@@ -124,6 +124,7 @@ DSAReps is built as a three-layer system where data flows from the browser to th
 
 ## 🗂️ Project Structure
 
+```
 .
 ├── Frontend/
 │   └── Chrome Extension (Manifest V3) for capturing problems and managing revision actions.
@@ -133,8 +134,7 @@ DSAReps is built as a three-layer system where data flows from the browser to th
 │   └── Node.js + Express API with MongoDB for auth, problems, revisions, and user settings.
 └── docs/
     ├── system-design.md
-    └── assets
-
+    └── assets/
 ```
 
 ---
