@@ -63,17 +63,20 @@ The backend acts as the central source of truth, handling OAuth, problem ingesti
 
 ### The Rating System & Math
 
-When a user reviews a problem, the backend recalculates their `stabilityScore` (0-100 mastery rating) and applies an interval multiplier to schedule the next review.
+The user's subjective feedback during a review acts as the input. The backend then recalculates their `stabilityScore` (0-100 mastery rating) and applies an interval multiplier to schedule the next review. A newly captured problem starts with a baseline `stabilityScore` of 30.
 
-- 🔴 **FORGOT (< 40% Stability) → FULL_RECODE**
+- 🔴 **User Input: FORGOT**
+  - **Resulting State:** `FULL_RECODE` (< 40% Stability)
   - **Logic:** The user completely forgot the approach.
-  - **Math:** Heavy penalty to `stabilityScore` (e.g., reset to base).
+  - **Math:** Heavy penalty applied to `stabilityScore` (e.g., reset to base 30). 
   - **Interval:** Resets to a **1-day** interval to force immediate re-learning.
-- 🟡 **SLOW (40-70% Stability) → PATTERN_REBUILD**
+- 🟡 **User Input: SLOW**
+  - **Resulting State:** `PATTERN_REBUILD` (40-70% Stability)
   - **Logic:** The user solved it, but struggled to recall the optimal pattern.
   - **Math:** Moderate boost to `stabilityScore` (+10 to 20 points).
   - **Interval:** Applies a **1.5x multiplier** to the current interval (e.g., 2 days becomes 3 days).
-- 🟢 **CLEAN (> 70% Stability) → MICRO_RECALL**
+- 🟢 **User Input: CLEAN**
+  - **Resulting State:** `MICRO_RECALL` (> 70% Stability)
   - **Logic:** Instant recognition and flawless execution.
   - **Math:** Maximum boost to `stabilityScore` (capped at 100).
   - **Interval:** Applies a **2.5x multiplier** to the current interval (e.g., 4 days becomes 10 days) to push it further into long-term memory.
