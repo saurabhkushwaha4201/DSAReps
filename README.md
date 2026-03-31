@@ -51,16 +51,34 @@ DSAReps addresses this by introducing a spaced-repetition-based workflow for DSA
 
 ---
 
-## 📸 Screenshots
+## 📸 See it in Action
 
-### 📸 See it in Action
-
-| Left | Right |
-|------|-------|
-| **🧩 Frictionless Capture**<br><em>Injected UI lets you save and tag problems without leaving your LeetCode flow.</em><br><br><video src="https://github.com/user-attachments/assets/4ff394fc-e9d6-4f5d-b712-39251e7ae7cc" width="100%" autoplay loop muted playsinline></video> | **🖥️ Command Center**<br><em>Track your algorithmic mastery, daily tasks, and historical consistency.</em><br><br><img src="/.docs/assets/dashboard-home.png" alt="Dashboard Overview" width="100%"> |
-| **⚡ In-Context Revision**<br><em>Review scheduled spaced-repetition tasks directly on coding platforms.</em><br><br><img src="/.docs/assets/in-browser-review.png" alt="In Browser Review" width="100%"> | **🗂️ Data Management**<br><em>Filter, organize, and manage all your tracked problems across multiple platforms.</em><br><br><img src="/.docs/assets/problem-list.png" alt="Problem List" width="100%"> |
-
----
+<table>
+  <tr>
+    <td valign="top" width="50%">
+      <b>🧩 Frictionless Capture</b><br>
+      <em>Injected UI lets you save and tag problems without leaving your LeetCode flow.</em><br><br>
+      <video src="https://github.com/user-attachments/assets/4ff394fc-e9d6-4f5d-b712-39251e7ae7cc" width="100%" autoplay loop muted playsinline></video>
+    </td>
+    <td valign="top" width="50%">
+      <b>🖥️ Command Center</b><br>
+      <em>Track your algorithmic mastery, daily tasks, and historical consistency.</em><br><br>
+      <img src="/.docs/assets/dashboard-home.png" alt="Dashboard Overview" width="100%">
+    </td>
+  </tr>
+  <tr>
+    <td valign="top" width="50%">
+      <b>⚡ In-Context Revision</b><br>
+      <em>Review scheduled spaced-repetition tasks directly on coding platforms.</em><br><br>
+      <img src="/.docs/assets/in-browser-review.png" alt="In Browser Review" width="100%">
+    </td>
+    <td valign="top" width="50%">
+      <b>🗂️ Data Management</b><br>
+      <em>Filter, organize, and manage all your tracked problems across multiple platforms.</em><br><br>
+      <img src="/.docs/assets/problem-list.png" alt="Problem List" width="100%">
+    </td>
+  </tr>
+</table>
 
 ## 🧩 Installing the Extension (For Users)
 
