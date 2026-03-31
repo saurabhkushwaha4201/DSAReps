@@ -62,19 +62,19 @@ DSAReps addresses this by introducing a spaced-repetition based workflow for DSA
     <td valign="top" width="50%">
       <h3>🖥️ Command Center</h3>
       <em>Track your algorithmic mastery, daily tasks, and historical consistency.</em><br><br>
-      <img src="./docs/assets/dashboard-home.png" alt="Dashboard Overview" width="100%">
+      <img src="./.docs/assets/dashboard-home.png" alt="Dashboard Overview" width="100%">
     </td>
   </tr>
   <tr>
     <td valign="top" width="50%">
       <h3>⚡ In-Context Revision</h3>
       <em>Review scheduled spaced-repetition tasks directly on coding platforms.</em><br><br>
-      <img src="./docs/assets/in-browser-review.png" alt="In Browser Review" width="100%">
+      <img src="./.docs/assets/in-browser-review.png" alt="In Browser Review" width="100%">
     </td>
     <td valign="top" width="50%">
       <h3>🗂️ Data Management</h3>
       <em>Filter, organize, and manage all your tracked problems across multiple platforms.</em><br><br>
-      <img src="./docs/assets/problem-list.png" alt="Problem List" width="100%">
+      <img src="./.docs/assets/problem-list.png" alt="Problem List" width="100%">
     </td>
   </tr>
 </table>
