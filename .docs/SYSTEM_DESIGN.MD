@@ -6,26 +6,26 @@ This document details the underlying mechanics, algorithms, API contracts, and a
 
 ```mermaid
 graph TD
-    subgraph Browser Extension
-        A[Popup UI] -->|Auth & Trigger| B(Background Service Worker)
-        C[Content Script] -->|Extracts Problem & Shadow DOM| B
-    end
+  subgraph Browser["Browser Extension"]
+    A["Popup UI"] -->|Auth & Trigger| B["Background Service Worker"]
+    C["Content Script"] -->|Extracts Problem & Shadow DOM| B
+  end
 
-    subgraph Backend API Node.js
-        B -->|REST APIs| D{Express Router}
-        D -->|Auth Middleware| E[Controllers]
-        E -->|Spaced Repetition Logic| F[Triage Service]
-    end
+  subgraph Backend["Backend API Node.js"]
+    B -->|REST APIs| D{{"Express Router"}}
+    D -->|Auth Middleware| E["Controllers"]
+    E -->|Spaced Repetition Logic| F["Triage Service"]
+  end
 
-    subgraph Database
-        E -->|Mongoose| G[(MongoDB)]
-        F <-->|Query Due Tasks| G
-    end
+  subgraph Database["Database"]
+    E -->|Mongoose| G[("MongoDB")]
+    F <-->|Query Due Tasks| G
+  end
 
-    subgraph Web Dashboard
-        H[React UI] -->|Fetch Stats & Tasks| D
-        G -->|Returns Data| H
-    end
+  subgraph Dashboard["Web Dashboard"]
+    H["React UI"] -->|Fetch Stats & Tasks| D
+    G -->|Returns Data| H
+  end
 ```
 
 ## 1. 🔌 Backend API & Data Flow
@@ -63,11 +63,11 @@ The backend acts as the central source of truth, handling OAuth, problem ingesti
 
 ### The Rating System & Math
 
-When a user reviews a problem, the backend recalculates their `stabilityScore` (0-100 mastery rating) and applies an interval multiplier to schedule the next review. 
+When a user reviews a problem, the backend recalculates their `stabilityScore` (0-100 mastery rating) and applies an interval multiplier to schedule the next review.
 
 - 🔴 **FORGOT (< 40% Stability) → FULL_RECODE**
   - **Logic:** The user completely forgot the approach.
-  - **Math:** Heavy penalty to `stabilityScore` (e.g., reset to base). 
+  - **Math:** Heavy penalty to `stabilityScore` (e.g., reset to base).
   - **Interval:** Resets to a **1-day** interval to force immediate re-learning.
 - 🟡 **SLOW (40-70% Stability) → PATTERN_REBUILD**
   - **Logic:** The user solved it, but struggled to recall the optimal pattern.
@@ -102,7 +102,7 @@ The Problem collection is designed to track both metadata and spaced-repetition 
   stabilityScore: Number, // 0-100 mastery rating
   lastAttemptRating: String, // 'FORGOT', 'SLOW', 'CLEAN'
   nextReviewType: String, // 'MICRO_RECALL', 'PATTERN_REBUILD', 'FULL_RECODE'
-  currentIntervalDays: Number, 
+  currentIntervalDays: Number,
   nextReviewDate: Date,
   revisedCount: Number,
   lastRevised: Date,
@@ -161,35 +161,35 @@ To understand how the decoupled components of DSAReps operate as a unified syste
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor User
-    participant Ext as Chrome Extension
-    participant API as Node.js Backend
-    participant DB as MongoDB
-    participant Dash as React Dashboard
+  autonumber
+  actor User
+  participant Ext as Chrome Extension
+  participant API as Node.js Backend
+  participant DB as MongoDB
+  participant Dash as React Dashboard
 
-    Note over User, DB: Phase 1: Problem Capture
-    User->>Ext: Solves "Two-Sum" & clicks "Save" (Hard)
-    Ext->>API: POST /api/problems {title, difficulty, notes}
-    API->>DB: Insert Problem (stability: 30, nextReview: +1 day)
-    DB-->>API: Document Created
-    API-->>Ext: 201 Created {problemId}
-    Ext-->>User: Visual feedback (Blue Bookmark + Toast)
+  Note over User,DB: Phase 1: Problem Capture
+  User->>Ext: Solves "Two-Sum" & clicks "Save" (Hard)
+  Ext->>API: POST /api/problems {title, difficulty, notes}
+  API->>DB: Insert Problem (stability: 30, nextReview: +1 day)
+  DB-->>API: Document Created
+  API-->>Ext: 201 Created {problemId}
+  Ext-->>User: Visual feedback (Blue Bookmark + Toast)
 
-    Note over User, Dash: Phase 2: Daily Triage (Next Day)
-    User->>Dash: Opens Dashboard
-    Dash->>API: GET /api/problems/today
-    API->>DB: Query: nextReviewDate <= today OR isManualOverride == true
-    DB-->>API: Returns due tasks sorted by lowest stability
-    API-->>Dash: Array of tasks (max daily cap)
-    Dash-->>User: Displays "Today's Tasks" queue (Tagged: Full Recode)
+  Note over User,Dash: Phase 2: Daily Triage (Next Day)
+  User->>Dash: Opens Dashboard
+  Dash->>API: GET /api/problems/today
+  API->>DB: Query: nextReviewDate <= today OR isManualOverride == true
+  DB-->>API: Returns due tasks sorted by lowest stability
+  API-->>Dash: Array of tasks (max daily cap)
+  Dash-->>User: Displays "Today's Tasks" queue (Tagged: Full Recode)
 
-    Note over User, DB: Phase 3: Spaced Repetition Update
-    User->>Dash: Re-solves problem & clicks "CLEAN" rating
-    Dash->>API: POST /api/revisions { problemId, rating: 'CLEAN' }
-    API->>API: Algorithm: Apply 2.5x multiplier, then round interval to whole days (e.g., Math.round)
-    API->>DB: Update (stability: 50, nextReview: +3 days, rounded from 2.5)
-    DB-->>API: Success (New RevisionLog entry created)
-    API-->>Dash: Updated stats & newly calculated metrics
-    Dash-->>User: UI Reacts: Heatmap cell updates, task removed from queue
+  Note over User,DB: Phase 3: Spaced Repetition Update
+  User->>Dash: Re-solves problem & clicks "CLEAN" rating
+  Dash->>API: POST /api/revisions { problemId, rating: 'CLEAN' }
+  API->>API: Algorithm: Apply 2.5x multiplier, then round interval to whole days (e.g., Math.round)
+  API->>DB: Update (stability: 50, nextReview: +3 days, rounded from 2.5)
+  DB-->>API: Success (New RevisionLog entry created)
+  API-->>Dash: Updated stats & newly calculated metrics
+  Dash-->>User: UI Reacts: Heatmap cell updates, task removed from queue
 ```
