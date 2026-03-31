@@ -43,14 +43,14 @@ The backend acts as the central source of truth, handling OAuth, problem ingesti
 - `POST /api/problems` - Captures a new problem from the extension.
 - `GET /api/problems` - Retrieves paginated problem history.
 - `POST /api/revisions` - Submits a rating (CLEAN, SLOW, FORGOT) and recalculates the stabilityScore and nextReviewDate.
-- `POST /api/problems/{id}/archive` - Archives mastered/irrelevant problems.
+- `PATCH /api/problems/:id/archive` - Archives mastered/irrelevant problems.
 
 ### Dashboard Analytics
 
-- `GET /api/dashboard/stats` - Returns aggregated data for the UI:
-  - Today's task queue (via Triage Service)
+- `GET /api/problems/stats` - Returns aggregated data for the UI:
   - 182-day heatmap contribution data
   - Difficulty mastery percentages
+- `GET /api/problems/today` - Returns today's task queue (via Triage Service).
 
 ## 2. 🧩 Extension Architecture (Shadow DOM & State)
 
