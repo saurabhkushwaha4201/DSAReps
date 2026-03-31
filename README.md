@@ -50,7 +50,7 @@ DSAReps addresses this by introducing a spaced-repetition based workflow for DSA
 
 ## 📸 Screenshots
 
-## 📸 See it in Action
+### 📸 See it in Action
 
 <table>
   <tr>
