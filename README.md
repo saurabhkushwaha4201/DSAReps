@@ -50,48 +50,39 @@ DSAReps addresses this by introducing a spaced-repetition based workflow for DSA
 
 ## 📸 Screenshots
 
-### 📸 See it in Action
+### 🖥️ Dashboard
+_Overview of tasks, heatmap, and progress tracking._
 
-<table>
-  <tr>
-    <td valign="top" width="50%">
-      <h3>🧩 Frictionless Capture</h3>
-      <em>Injected UI lets you save and tag problems without leaving your LeetCode flow.</em><br><br>
-      <video src="https://github.com/user-attachments/assets/4ff394fc-e9d6-4f5d-b712-39251e7ae7cc" width="100%" autoplay loop muted playsinline></video>
-    </td>
-    <td valign="top" width="50%">
-      <h3>🖥️ Command Center</h3>
-      <em>Track your algorithmic mastery, daily tasks, and historical consistency.</em><br><br>
-      <img src="./.docs/assets/dashboard-home.png" alt="Dashboard Overview" width="100%">
-    </td>
-  </tr>
-  <tr>
-    <td valign="top" width="50%">
-      <h3>⚡ In-Context Revision</h3>
-      <em>Review scheduled spaced-repetition tasks directly on coding platforms.</em><br><br>
-      <img src="./.docs/assets/in-browser-review.png" alt="In Browser Review" width="100%">
-    </td>
-    <td valign="top" width="50%">
-      <h3>🗂️ Data Management</h3>
-      <em>Filter, organize, and manage all your tracked problems across multiple platforms.</em><br><br>
-      <img src="./.docs/assets/problem-list.png" alt="Problem List" width="100%">
-    </td>
-  </tr>
-</table>
+![Dashboard](./docs/dashboard.png)
+
+### 🔥 Heatmap
+_Visualize consistency and revision frequency._
+
+![Heatmap](./docs/heatmap.png)
+
+### 📅 Daily Tasks
+_Today’s revision queue with scheduled problems._
+
+![Tasks](./docs/tasks.png)
+
+### 🧩 Extension Popup
+_Save problems and manage revisions directly from coding platforms._
+
+![Extension](./docs/extension.png)
 
 ---
 
 ## 🧩 Installing the Extension (For Users)
 
-> No local setup required! The dashboard and backend are already deployed.
+> No local setup required. The dashboard and backend are already deployed.
 
 1. Go to the **[Releases](../../releases)** page.
-2. Download the **`Extension.zip`** file attached to the latest release (you can ignore the "Source code" files).
-3. Extract the downloaded zip file to your computer.
-4. Open Google Chrome and navigate to `chrome://extensions/`.
-5. Enable **Developer Mode** (toggle in the top-right corner).
+2. Download the latest `extension.zip`.
+3. Extract the zip file to a local folder.
+4. Open Chrome and navigate to `chrome://extensions/`.
+5. Enable **Developer Mode** (top-right toggle).
 6. Click **Load Unpacked**.
-7. Select the **`dist`** folder located *inside* the extracted `Extension` folder.
+7. Select the extracted folder.
 
 ✅ **The extension is now ready to use.**
 
@@ -116,11 +107,6 @@ DSAReps is built as a three-layer system where data flows from the browser to th
   - Fetches user data and scheduled tasks from the backend
   - Displays daily revision queue and analytics
   - Visualizes consistency using heatmaps and charts
-<br>
-
-> 🧠 **Under the Hood: Technical Highlights** <br>
-> DSAReps is engineered to handle complex state, background processing, and accurate data tracking. Want to see the Spaced Repetition math, Shadow DOM isolation, Chrome Service Worker lifecycles, and our Daily Triage algorithm? <br>
-> 👉 **[Read the comprehensive System Design & Architecture Deep Dive](./.docs/SYSTEM_DESIGN.MD)**
 
 ---
 
@@ -261,6 +247,3 @@ Contributions, issues, and feature ideas are welcome! If you’d like to improve
 ## 📄 License
 
 This project is licensed under the MIT License.
-
-
-
