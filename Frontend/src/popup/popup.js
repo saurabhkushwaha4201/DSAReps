@@ -88,6 +88,14 @@ function showError(msg) {
     showState(STATES.ERROR);
 }
 
+function showSuccess(title, description) {
+    const titleEl = document.getElementById('success-title');
+    const descEl = document.getElementById('success-desc');
+    if (titleEl) titleEl.innerText = title || 'Saved Successfully!';
+    if (descEl) descEl.innerText = description || 'Problem saved to your tracker.';
+    showState(STATES.SUCCESS);
+}
+
 // Logic
 async function init() {
     console.log('[Popup] Init');
@@ -304,6 +312,11 @@ document.getElementById('save-form').addEventListener('submit', async (e) => {
             return;
         }
 
+        if (response && response.restored) {
+            showSuccess('Restored to Tracker!', 'Problem was previously removed and is now active again.');
+            return;
+        }
+
         if (response && response.isDuplicate) {
             if (btnSave) btnSave.innerText = 'Already Saved';
             if (msgDiv) {
@@ -315,7 +328,7 @@ document.getElementById('save-form').addEventListener('submit', async (e) => {
             // "if (msgDiv) ... msgDiv.classList.remove('hidden');"
             return;
         } else if (response && response.success) {
-            showState(STATES.SUCCESS);
+            showSuccess('Saved Successfully!', 'Problem saved to your tracker.');
         } else {
             showError(response ? response.error : 'Failed to save');
         }
@@ -404,14 +417,19 @@ if (manualForm) {
                 return;
             }
 
+            if (response && response.restored) {
+                showSuccess('Restored to Tracker!', 'Problem was previously removed and is now active again.');
+                return;
+            }
+
             if (response && response.isDuplicate) {
                 if (btnSave) btnSave.innerText = 'Already Tracked';
-                setTimeout(() => showState(STATES.SUCCESS), 800);
+                setTimeout(() => showSuccess('Already Tracked', 'This problem is already in your active tracker.'), 800);
                 return;
             }
 
             if (response && response.success) {
-                showState(STATES.SUCCESS);
+                showSuccess('Saved Successfully!', 'Problem saved to your tracker.');
             } else {
                 showError(response ? response.error : 'Failed to save');
             }

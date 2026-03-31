@@ -175,7 +175,7 @@ const STYLES = `
 
 export default function CaptureModal({ problemDetails, onClose }) {
   const [coreTrick, setCoreTrick] = useState('');
-  const [status, setStatus] = useState(null); // null | 'saving' | 'success' | 'error' | 'duplicate'
+  const [status, setStatus] = useState(null); // null | 'saving' | 'success' | 'error' | 'duplicate' | 'restored'
   const [intervals, setIntervals] = useState({ hard: 1, medium: 3, easy: 5 });
   const [selectedDifficulty, setSelectedDifficulty] = useState(null);
 
@@ -224,13 +224,20 @@ export default function CaptureModal({ problemDetails, onClose }) {
 
       if (response?.isDuplicate) {
         setStatus('duplicate');
-        setTimeout(() => onClose(true, response.problem?._id || null), 1200);
+        setTimeout(() => onClose(true, response.problem?._id || null, false), 1200);
+        return;
+      }
+
+      if (response?.restored) {
+        setStatus('restored');
+        chrome.runtime.sendMessage({ type: 'GET_DAILY_TASKS' });
+        setTimeout(() => onClose(true, response.problem?._id || null, true), 900);
         return;
       }
 
       setStatus('success');
       chrome.runtime.sendMessage({ type: 'GET_DAILY_TASKS' });
-      setTimeout(() => onClose(true, response.problem?._id || null), 800);
+      setTimeout(() => onClose(true, response.problem?._id || null, false), 800);
     } catch (err) {
       console.error('[CaptureModal] Save error:', err);
       setStatus('error');
@@ -251,6 +258,9 @@ export default function CaptureModal({ problemDetails, onClose }) {
           )}
           {status === 'duplicate' && (
             <div className="status-msg" style={{ color: '#fab387' }}>Already saved</div>
+          )}
+          {status === 'restored' && (
+            <div className="status-msg success">Restored to tracker</div>
           )}
           {status === 'error' && (
             <div className="status-msg error">Failed to save</div>

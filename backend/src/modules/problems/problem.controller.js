@@ -109,7 +109,7 @@ const getAllProblems = async (req, res) => {
 
     const [problems, total] = await Promise.all([
       Problem.find(query)
-        .sort({ createdAt: -1 })
+        .sort({ updatedAt: -1 })
         .skip(skip)
         .limit(limit),
       Problem.countDocuments(query),
@@ -168,14 +168,21 @@ const saveProblem = async (req, res) => {
     let problem = await Problem.findOne({ userId, url });
 
     if (problem) {
-      if (problem.isDeleted) {
+      const wasDeleted = !!problem.isDeleted;
+      const wasArchived = problem.status === 'archived';
+      const restored = wasDeleted || wasArchived;
+
+      if (restored) {
         problem.isDeleted = false;
+        problem.status = 'active';
+        problem.archivedAt = null;
         await problem.save();
       }
 
       return res.status(200).json({
         success: true,
-        isDuplicate: true,
+        isDuplicate: !restored,
+        restored,
         problem,
       });
     }

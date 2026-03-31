@@ -218,11 +218,11 @@ function openCaptureModal(onConfirmed, onCancelled) {
   captureModalRoot.render(
     <CaptureModal
       problemDetails={details.isValid ? details.data : null}
-      onClose={(saved, dbId) => {
+      onClose={(saved, dbId, restored) => {
         captureModalRoot.unmount();
         captureModalShadow.innerHTML = '';
         captureModalRoot = null;
-        if (saved) onConfirmed?.(dbId);
+        if (saved) onConfirmed?.(dbId, !!restored);
         else onCancelled?.();
       }}
     />
@@ -317,13 +317,16 @@ async function injectAndSync(config) {
       // Not saved — open modal first, only save after user confirms
       btn.style.pointerEvents = 'auto';
       openCaptureModal(
-        async (dbId) => {
+        async (dbId, restored) => {
           // Confirmed: save to local storage with dbId for future removal
           await StorageController.save({ id: problemId, title: problemTitle, url: window.location.href, platform: config.platform, dbId });
           btn.classList.add('is-saved');
           btn.classList.remove('just-saved');
           void btn.offsetWidth;
           btn.classList.add('just-saved');
+          if (restored) {
+            showToast('Problem restored to tracker', '♻️');
+          }
         },
         () => { /* Cancelled: icon stays gray */ }
       );
