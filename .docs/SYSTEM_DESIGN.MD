@@ -187,8 +187,8 @@ sequenceDiagram
     Note over User, DB: Phase 3: Spaced Repetition Update
     User->>Dash: Re-solves problem & clicks "CLEAN" rating
     Dash->>API: POST /api/revisions { problemId, rating: 'CLEAN' }
-    API->>API: Algorithm: Apply 2.5x multiplier to interval
-    API->>DB: Update (stability: 50, nextReview: +2.5 days)
+    API->>API: Algorithm: Apply 2.5x multiplier, then round interval to whole days (e.g., Math.round)
+    API->>DB: Update (stability: 50, nextReview: +3 days, rounded from 2.5)
     DB-->>API: Success (New RevisionLog entry created)
     API-->>Dash: Updated stats & newly calculated metrics
     Dash-->>User: UI Reacts: Heatmap cell updates, task removed from queue
