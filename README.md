@@ -9,7 +9,7 @@
 
 ## 🔗 Live Demo
 - 🌐 **Dashboard:** [https://dsareps.vercel.app/](https://dsareps.vercel.app/)
-- 🧩 **Chrome Extension:** [Download from Releases](../releases)
+- 🧩 **Chrome Extension:** [Download from Releases](./releases)
 
 ---
 
