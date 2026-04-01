@@ -235,16 +235,15 @@ Use the provided `.env.example` files in each folder as a reference. Use the fol
 |----------|----------|---------|---------|
 | `VITE_GOOGLE_CLIENT_ID` | Yes | `xxxxx.apps.googleusercontent.com` | Google Sign-In configuration |
 | `VITE_API_URL` | Yes* | `http://localhost:5000` | Backend API base URL |
-| `VITE_BACKEND_URL` | No | `http://localhost:5000` | Alternate backend URL key used by Axios |
 | `VITE_WEB3FORM_ACCESS_KEY` | No | `your_access_key` | Feedback form integration |
 
-> *At least one of `VITE_API_URL` or `VITE_BACKEND_URL` should be set.
+
 
 ### `Frontend/.env` (Extension)
 
 | Variable | Required | Example | Purpose |
 |----------|----------|---------|---------|
-| `VITE_BACKEND_URL` | No | `http://localhost:5000` | API base URL used by extension service worker |
+| `VITE_API_URL` | No | `http://localhost:5000` | API base URL used by extension service worker |
 | `VITE_DASHBOARD_URL` | No | `http://localhost:5175` | URL opened when launching dashboard from extension |
 
 ---
