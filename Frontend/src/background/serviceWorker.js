@@ -3,7 +3,7 @@ import AuthService from "./auth.service.js";
 console.log("[BG] Service Worker Loaded");
 
 
-const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || "https://extension-backend-mlcm.onrender.com").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "https://extension-backend-mlcm.onrender.com").replace(/\/$/, "");
 const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || "http://localhost:5175";
 const DIGEST_STATE_KEY = "dailyDigestState";
 const INTERVALS_CACHE_KEY = "revisionIntervalsCache";
