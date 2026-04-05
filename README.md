@@ -84,18 +84,31 @@ DSAReps addresses this by introducing a spaced-repetition-based workflow for DSA
 
 > No local setup required! The dashboard and backend are already deployed.
 
-1. Go to the **[Releases](../releases)** page.
-2. Download the **`Extension.zip`** file attached to the latest release (you can ignore the "Source code" files).
-3. Extract the downloaded zip file to your computer.
-4. Open Google Chrome and navigate to `chrome://extensions/`.
-5. Enable **Developer Mode** (toggle in the top-right corner).
-6. Click **Load Unpacked**.
-7. Select the **`dist`** folder located *inside* the extracted `Extension` folder.
+1. Go to the **[Releases](../releases)** page.  
+2. Download the **`Extension.zip`** file from the latest release *(ignore "Source code" files)*.  
+3. Extract the zip file to your computer.  
 
-✅ **The extension is now ready to use.**
+4. Open Google Chrome and go to:  
+   `chrome://extensions/`  
+
+5. Enable **Developer Mode** (top-right corner).  
+6. Click **Load Unpacked**.  
+7. Select the **`dist`** folder inside the extracted `Extension` folder.  
+
+---
+
+### 🔐 First-Time Setup
+
+8. Click the **Extensions (🧩 icon)** in the Chrome toolbar.  
+9. Find **DSAReps** and click the **📌 Pin icon** *(recommended for easy access)*.  
+10. Click on the **DSAReps extension icon**.  
+11. Log in to your account to activate syncing and tracking.  
+
+---
+
+✅ **The extension is now ready to use.**  
 
 > *Tip: Refresh any open LeetCode or Codeforces tabs if the extension doesn't appear immediately.*
-
 ---
 
 ## 🧩 System Architecture
