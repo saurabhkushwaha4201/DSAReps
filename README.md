@@ -84,7 +84,7 @@ DSAReps addresses this by introducing a spaced-repetition-based workflow for DSA
 
 > No local setup required! The dashboard and backend are already deployed.
 
-1. Go to the **[Releases](../releases)** page.  
+1. Go to the **[Releases](https://github.com/saurabhkushwaha4201/DSAReps/releases)** page.  
 2. Download the **`Extension.zip`** file from the latest release *(ignore "Source code" files)*.  
 3. Extract the zip file to your computer.  
 
