@@ -92,7 +92,6 @@ export const AuthProvider = ({ children }) => {
   const [initialAuth] = useState(getInitialAuthState);
   const [token, setToken] = useState(initialAuth.token);
   const [authUser, setAuthUser] = useState(initialAuth.user);
-  const [loading] = useState(false);
 
   const clearAuthStorage = useCallback(() => {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
@@ -122,9 +121,16 @@ export const AuthProvider = ({ children }) => {
 
   const setAuthFromToken = useCallback((nextToken) => {
     const payload = decodeJwtPayload(nextToken);
+    if (!payload) {
+      clearAuthStorage();
+      setToken(null);
+      setAuthUser(null);
+      return;
+    }
+
     const normalizedUser = normalizeUser(payload);
     persistAuth({ nextToken, nextUser: normalizedUser });
-  }, [persistAuth]);
+  }, [clearAuthStorage, persistAuth]);
 
   const logout = useCallback(() => {
     clearAuthStorage();
@@ -134,7 +140,7 @@ export const AuthProvider = ({ children }) => {
 
   const isAuthenticated = Boolean(token);
   const getCurrentUser = () => {
-    return localStorage.getItem(TOKEN_STORAGE_KEY);
+    return authUser;
   };
 
   const user = authUser;
@@ -147,11 +153,10 @@ export const AuthProvider = ({ children }) => {
     setAuthFromToken,
     logout,
     getCurrentUser,
-    loading,
   };
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

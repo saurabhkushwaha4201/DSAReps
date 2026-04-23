@@ -52,7 +52,7 @@ export default function TodayTasks() {
           getUserSettings(),
         ]);
         setDailyCap(settingsData?.settings?.dailyGoal || 3);
-        if (problems.length > 0) setTotalCount(problems.length);
+        setTotalCount(problems.length);
       } catch (err) {
         console.error(err);
       } finally {
@@ -81,6 +81,7 @@ export default function TodayTasks() {
     setRefreshing(true);
     try {
       const newTasks = await fetchTasks();
+      setTotalCount(doneCount + newTasks.length);
       if (newTasks.length === 0) {
         toast('No more problems due right now', { icon: '📭' });
       }
@@ -161,15 +162,24 @@ export default function TodayTasks() {
                 <div className="flex items-start justify-between mb-2 gap-2">
                   <div className="flex items-start gap-2 min-w-0">
                     <PlatformIcon url={task.url || ''} />
-                    <a
-                      href={task.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={task.title}
-                      className="text-sm font-semibold text-slate-900 dark:text-white truncate hover:underline hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                    >
-                      {task.title}
-                    </a>
+                    {typeof task.url === 'string' && task.url.trim() ? (
+                      <a
+                        href={task.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={task.title}
+                        className="text-sm font-semibold text-slate-900 dark:text-white truncate hover:underline hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                      >
+                        {task.title}
+                      </a>
+                    ) : (
+                      <span
+                        title={task.title}
+                        className="text-sm font-semibold text-slate-900 dark:text-white truncate"
+                      >
+                        {task.title}
+                      </span>
+                    )}
                   </div>
                   <span
                     className={`text-xs font-medium px-2 py-0.5 rounded-full ${
@@ -208,7 +218,7 @@ export default function TodayTasks() {
                   <Tooltip.Root>
                     <Tooltip.Trigger asChild>
                       <span className="cursor-help border-b border-dashed border-slate-400/50 pb-px">
-                        Stability: {task.stabilityScore}%
+                        Stability: {task.stabilityScore ?? 'N/A'}{task.stabilityScore == null ? '' : '%'}
                       </span>
                     </Tooltip.Trigger>
                     <Tooltip.Portal>

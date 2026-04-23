@@ -30,10 +30,29 @@ const buttonVariants = cva(
     }
 )
 
+const composeRefs = (...refs) => (node) => {
+    refs.forEach((ref) => {
+        if (!ref) return
+        if (typeof ref === 'function') {
+            ref(node)
+            return
+        }
+        ref.current = node
+    })
+}
+
 const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? motion.span : motion.button
+    if (asChild && React.isValidElement(props.children)) {
+        const child = React.Children.only(props.children)
+        return React.cloneElement(child, {
+            ...props,
+            className: twMerge(clsx(buttonVariants({ variant, size, className }), child.props.className)),
+            ref: composeRefs(ref, child.ref),
+        })
+    }
+
     return (
-        <Comp
+        <motion.button
             whileTap={{ scale: 0.95 }}
             className={twMerge(clsx(buttonVariants({ variant, size, className })))}
             ref={ref}

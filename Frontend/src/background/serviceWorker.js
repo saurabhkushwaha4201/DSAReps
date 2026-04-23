@@ -10,6 +10,7 @@ const INTERVALS_CACHE_KEY = "revisionIntervalsCache";
 const TASKS_STATE_KEY = "tasksState";
 const TASKS_CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
 const DEFAULT_INTERVALS = { hard: 1, medium: 3, easy: 5 };
+const OBJECT_ID_REGEX = /^[a-f\d]{24}$/i;
 let tasksFetchInFlight = null;
 
 function getTodayKey(date = new Date()) {
@@ -367,7 +368,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // Handle problem delete (called when user unsaves via bookmark icon)
   if (message.type === "REMOVE_PROBLEM") {
-    const { dbId } = message.data;
+    const dbId = message.data?.dbId;
+    if (!dbId || typeof dbId !== "string" || !OBJECT_ID_REGEX.test(dbId)) {
+      sendResponse({ error: "MISSING_DBID" });
+      return false;
+    }
+
     apiFetch(`/api/problems/${dbId}`, { method: "DELETE" })
       .then((res) => {
         fetchAndUpdateBadge();

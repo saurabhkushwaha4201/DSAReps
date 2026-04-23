@@ -18,6 +18,7 @@ export default function Login() {
 
         if (redirectError) {
             toast.error('Authentication failed. Please try again.');
+            window.history.replaceState({}, document.title, window.location.pathname);
             navigate('/login', { replace: true });
             return;
         }
@@ -27,13 +28,14 @@ export default function Login() {
         }
 
         setAuthFromToken(redirectToken);
+        const allowedOrigin = window.location.origin;
         window.postMessage(
             {
                 source: "DSA_DASHBOARD",
                 type: "AUTH_SET_TOKEN",
                 token: redirectToken,
             },
-            "*"
+            allowedOrigin
         );
         navigate('/', { replace: true });
     }, [navigate, setAuthFromToken]);
@@ -61,13 +63,14 @@ export default function Login() {
             }
             // UX: Update toast on success
             toast.success("Success! Welcome back.", { id: loadToast });
+            const allowedOrigin = window.location.origin;
             window.postMessage(
                 {
                     source: "DSA_DASHBOARD",
                     type: "AUTH_SET_TOKEN",
                     token
                 },
-                "*"
+                allowedOrigin
             );
             navigate('/');
         } catch (error) {

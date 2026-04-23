@@ -14,7 +14,14 @@ const DataExport = () => {
 
             // 2. Fetch LocalStorage Data
             const localMetaRaw = localStorage.getItem('dsa_user_meta');
-            const localMeta = localMetaRaw ? JSON.parse(localMetaRaw) : {};
+            let localMeta = {};
+            if (localMetaRaw) {
+                try {
+                    localMeta = JSON.parse(localMetaRaw);
+                } catch (error) {
+                    console.error("[DataExport] Failed to parse localStorage key 'dsa_user_meta':", error);
+                }
+            }
 
             // 3. Construct the Dump
             const dump = {

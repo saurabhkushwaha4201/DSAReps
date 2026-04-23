@@ -48,7 +48,7 @@ function initBtnGroup(groupId, selectId, dataAttr) {
 
 function initManualGroups() {
     initBtnGroup('difficulty-group', 'difficulty', 'data-val');
-    initBtnGroup('manual-diff-group', 'manual-difficulty', 'data-diff');
+    initBtnGroup('manual-diff-group', 'manual-difficulty', 'data-val');
     initBtnGroup('manual-platform-group', 'manual-platform', 'data-platform');
 }
 
@@ -400,7 +400,7 @@ if (manualForm) {
             platform,
             title,
             url,
-            difficulty,
+            difficulty: difficulty.toLowerCase(),
             attemptType: 'fresh',
             notes,
             timeSpent: 0,

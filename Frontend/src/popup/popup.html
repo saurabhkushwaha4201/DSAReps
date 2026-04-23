@@ -149,10 +149,8 @@
         .btn-group-item.diff-medium.active{ background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.4); color: #fbbf24; }
         .btn-group-item.diff-easy.active  { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); color: #34d399; }
 
-        /* Status active states */
-        .btn-group-item.stat-solved.active  { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.5); color: #a5b4fc; }
-        .btn-group-item.stat-partial.active { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.4); color: #fbbf24; }
-        .btn-group-item.stat-watched.active { background: rgba(100,116,139,0.15); border-color: rgba(100,116,139,0.4); color: #94a3b8; }
+        /* Platform active state */
+        .btn-group-item.platform-btn.active { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.5); color: #a5b4fc; }
 
         /* --- Primary action button --- */
         .btn {
@@ -313,22 +311,24 @@
                         </select>
                         <!-- visible platform buttons -->
                         <div class="btn-group" id="manual-platform-group">
-                            <button type="button" class="btn-group-item stat-solved active" data-platform="leetcode">LC</button>
-                            <button type="button" class="btn-group-item stat-partial" data-platform="codeforces">CF</button>
-                            <button type="button" class="btn-group-item stat-watched" data-platform="gfg">GFG</button>
+                            <button type="button" class="btn-group-item platform-btn active" data-platform="leetcode">LC</button>
+                            <button type="button" class="btn-group-item platform-btn" data-platform="codeforces">CF</button>
+                            <button type="button" class="btn-group-item platform-btn" data-platform="cses">CSES</button>
+                            <button type="button" class="btn-group-item platform-btn" data-platform="gfg">GFG</button>
+                            <button type="button" class="btn-group-item platform-btn" data-platform="other">Other</button>
                         </div>
                     </div>
                     <div>
                         <label class="field-label">Difficulty</label>
                         <select id="manual-difficulty">
-                            <option value="easy">Easy</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="hard">Hard</option>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="Hard">Hard</option>
                         </select>
                         <div class="btn-group" id="manual-diff-group">
-                            <button type="button" class="btn-group-item diff-hard" data-diff="hard">Hard</button>
-                            <button type="button" class="btn-group-item diff-medium active" data-diff="medium">Mid</button>
-                            <button type="button" class="btn-group-item diff-easy" data-diff="easy">Easy</button>
+                            <button type="button" class="btn-group-item diff-hard" data-val="Hard">Hard</button>
+                            <button type="button" class="btn-group-item diff-medium active" data-val="Medium">Mid</button>
+                            <button type="button" class="btn-group-item diff-easy" data-val="Easy">Easy</button>
                         </div>
                     </div>
                 </div>

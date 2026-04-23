@@ -12,6 +12,7 @@ const FeedbackModal = ({ isOpen, onClose, userName, userEmail }) => {
     const [message, setMessage] = useState('');
     const [status, setStatus]   = useState('idle'); // idle | loading | success | error
     const closeTimeoutRef       = useRef(null);
+    const successTimeoutRef     = useRef(null);
 
     // ESC key to close
     useEffect(() => {
@@ -21,6 +22,11 @@ const FeedbackModal = ({ isOpen, onClose, userName, userEmail }) => {
         return () => document.removeEventListener('keydown', onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]);
+
+    useEffect(() => () => {
+        if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+        if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -50,15 +56,18 @@ const FeedbackModal = ({ isOpen, onClose, userName, userEmail }) => {
 
             if (response.ok) {
                 setStatus('success');
-                setTimeout(() => {
+                if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+                successTimeoutRef.current = setTimeout(() => {
                     onClose();
                     setStatus('idle');
                     setMessage('');
+                    successTimeoutRef.current = null;
                 }, 2000);
             } else {
                 setStatus('error');
             }
-        } catch {
+        } catch (error) {
+            console.error('[FeedbackModal] Submit failed:', error);
             setStatus('error');
         }
     };
@@ -67,6 +76,10 @@ const FeedbackModal = ({ isOpen, onClose, userName, userEmail }) => {
         onClose();
         // Reset after animation plays — cancel any pending reset first
         if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+        if (successTimeoutRef.current) {
+            clearTimeout(successTimeoutRef.current);
+            successTimeoutRef.current = null;
+        }
         closeTimeoutRef.current = setTimeout(() => {
             setStatus('idle');
             setMessage('');
