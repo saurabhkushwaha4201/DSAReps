@@ -66,20 +66,22 @@ The backend acts as the central source of truth, handling OAuth, problem ingesti
 
 The user's subjective feedback during a review acts as the input. The backend then recalculates their `stabilityScore` (0-100 mastery rating) and applies an interval multiplier to schedule the next review. A newly captured problem starts with a baseline `stabilityScore` of 30.
 
+Current backend rules are implemented in `RATING_RULES` and `computeReviewType`.
+
 - 🔴 **User Input: FORGOT**
-  - **Resulting State:** `FULL_RECODE` (< 40% Stability)
+  - **Resulting State:** `FULL_RECODE` (resolved by `computeReviewType(stabilityScore)`)
   - **Logic:** The user completely forgot the approach.
-  - **Math:** Heavy penalty applied to `stabilityScore` (e.g., reset to base 30). 
+  - **Math:** **Hard reset** in `RATING_RULES.FORGOT`: `stabilityScore = 10`.
   - **Interval:** Resets to a **1-day** interval to force immediate re-learning.
 - 🟡 **User Input: SLOW**
-  - **Resulting State:** `PATTERN_REBUILD` (40-70% Stability)
+  - **Resulting State:** `PATTERN_REBUILD` (resolved by `computeReviewType(stabilityScore)`)
   - **Logic:** The user solved it, but struggled to recall the optimal pattern.
-  - **Math:** Moderate boost to `stabilityScore` (+10 to 20 points).
+  - **Math:** Deterministic increase in `RATING_RULES.SLOW`: `stabilityScore = min(100, stabilityScore + 5)`.
   - **Interval:** Applies a **1.5x multiplier** to the current interval (e.g., 2 days becomes 3 days).
 - 🟢 **User Input: CLEAN**
-  - **Resulting State:** `MICRO_RECALL` (> 70% Stability)
+  - **Resulting State:** `MICRO_RECALL` (resolved by `computeReviewType(stabilityScore)`)
   - **Logic:** Instant recognition and flawless execution.
-  - **Math:** Maximum boost to `stabilityScore` (capped at 100).
+  - **Math:** Deterministic increase in `RATING_RULES.CLEAN`: `stabilityScore = min(100, stabilityScore + 20)`.
   - **Interval:** Applies a **2.5x multiplier** to the current interval (e.g., 4 days becomes 10 days) to push it further into long-term memory.
 
 ### Daily Triage Service (`triage.service.js`)
@@ -104,7 +106,7 @@ The Problem collection is designed to track both metadata and spaced-repetition 
   userId: ObjectId,
   platform: String,       // 'leetcode', 'codeforces', etc.
   title: String,
-  url: String,            // Unique identifier per user
+  url: String,            // Unique identifier per user (enforced by compound unique index)
   difficulty: String,     // 'easy', 'medium', 'hard'
   notes: String,          // Markdown supported core-trick notes
   
@@ -122,6 +124,13 @@ The Problem collection is designed to track both metadata and spaced-repetition 
   manualOverrideDate: Date
 }
 ```
+
+### Indexes
+
+- `({ userId: 1, url: 1 }, { unique: true, partialFilterExpression: { isDeleted: false } })`
+  - Enforces one active/non-deleted problem per user URL.
+  - Enables restore-on-retrack behavior: tracking the same URL again restores the existing document instead of creating a duplicate.
+  - Matches implementation in `backend/src/modules/problems/problem.model.js`.
 
 ## 5. 🛡️ Security & Guardrails
 
@@ -197,8 +206,8 @@ sequenceDiagram
   Note over User,DB: Phase 3: Spaced Repetition Update
   User->>Dash: Re-solves problem & clicks "CLEAN" rating
   Dash->>API: POST /api/problems/{id}/revise { rating: 'CLEAN' }
-  API->>API: Algorithm: Apply 2.5x multiplier, then round interval to whole days (e.g., Math.round)
-  API->>DB: Update (stability: 50, nextReview: +3 days, rounded from 2.5)
+  API->>API: Algorithm: RATING_RULES.CLEAN => stability +20 (cap 100), interval x2.5 then Math.round
+  API->>DB: Update (example: stability 30 -> 50, nextReview: +3 days, rounded from 2.5)
   DB-->>API: Success (New RevisionLog entry created)
   API-->>Dash: Updated stats & newly calculated metrics
   Dash-->>User: UI Reacts: Heatmap cell updates, task removed from queue

@@ -131,7 +131,7 @@ DSAReps is built as a three-layer system where data flows from the browser to th
 
 > 🧠 **Under the Hood: Technical Highlights**<br>
 > DSAReps is engineered to handle complex state, background processing, and accurate data tracking. Want to see the Spaced Repetition math, Shadow DOM isolation, Chrome Service Worker lifecycles, and our Daily Triage algorithm?<br>
-> 👉 **[Read the comprehensive System Design & Architecture Deep Dive](/.docs/SYSTEM_DESIGN.MD)**
+> 👉 **[Read the comprehensive System Design & Architecture Deep Dive](/docs/SYSTEM_DESIGN.MD)**
 
 ---
 
@@ -247,8 +247,11 @@ Use the provided `.env.example` files in each folder as a reference. Use the fol
 | Variable | Required | Example | Purpose |
 |----------|----------|---------|---------|
 | `VITE_GOOGLE_CLIENT_ID` | Yes | `xxxxx.apps.googleusercontent.com` | Google Sign-In configuration |
-| `VITE_API_URL` | Yes* | `http://localhost:5000` | Backend API base URL |
+| `VITE_API_URL` | No | `http://localhost:5000` | Backend API base URL |
+| `VITE_BACKEND_URL` | No | `http://localhost:5000` | Alternate backend URL key used by Axios |
 | `VITE_WEB3FORM_ACCESS_KEY` | No | `your_access_key` | Feedback form integration |
+
+> At least one of `VITE_API_URL` or `VITE_BACKEND_URL` should be set.
 
 
 
