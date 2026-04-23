@@ -84,20 +84,14 @@ DSAReps addresses this by introducing a spaced-repetition-based workflow for DSA
 
 > No local setup required! The dashboard and backend are already deployed.
 
-<<<<<<< HEAD
+
 1. Go to the **[Releases](https://github.com/saurabhkushwaha4201/DSAReps/releases)** page.  
-2. Download the **`Extension.zip`** file from the latest release *(ignore "Source code" files)*.  
-3. Extract the zip file to your computer.  
-=======
-1. Go to the **[Releases](/releases)** page.
 2. Download the **`Extension.zip`** file attached to the latest release (you can ignore the "Source code" files).
 3. Extract the downloaded zip file to your computer.
 4. Open Google Chrome and navigate to `chrome://extensions/`.
 5. Enable **Developer Mode** (toggle in the top-right corner).
 6. Click **Load Unpacked**.
 7. Select the **`dist`** folder located *inside* the extracted `Extension` folder.
->>>>>>> feature/add-toggle-sortBy
-
 4. Open Google Chrome and go to:  
    `chrome://extensions/`  
 
