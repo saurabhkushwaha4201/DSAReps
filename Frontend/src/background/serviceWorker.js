@@ -7,7 +7,10 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || "https://extension-backend
 const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || "http://localhost:5175";
 const DIGEST_STATE_KEY = "dailyDigestState";
 const INTERVALS_CACHE_KEY = "revisionIntervalsCache";
+const TASKS_STATE_KEY = "tasksState";
+const TASKS_CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
 const DEFAULT_INTERVALS = { hard: 1, medium: 3, easy: 5 };
+let tasksFetchInFlight = null;
 
 function getTodayKey(date = new Date()) {
   const y = date.getFullYear();
@@ -96,6 +99,40 @@ async function updateBadge(count) {
   }
 }
 
+async function getCachedTasksState() {
+  const data = await chrome.storage.local.get(TASKS_STATE_KEY);
+  return data?.[TASKS_STATE_KEY] || null;
+}
+
+function isTasksCacheFresh(tasksState) {
+  if (!tasksState || typeof tasksState.lastUpdated !== "number") {
+    return false;
+  }
+  return Date.now() - tasksState.lastUpdated <= TASKS_CACHE_TTL_MS;
+}
+
+async function fetchTodayTasksFromApi() {
+  if (tasksFetchInFlight) {
+    return tasksFetchInFlight;
+  }
+
+  tasksFetchInFlight = (async () => {
+    const data = await apiFetch("/api/problems/today");
+    const problems = data?.problems || [];
+    const tasksState = { problems, count: problems.length, lastUpdated: Date.now() };
+
+    // Persist to chrome.storage.local — all content scripts react via onChanged
+    await chrome.storage.local.set({ [TASKS_STATE_KEY]: tasksState });
+    return tasksState;
+  })();
+
+  try {
+    return await tasksFetchInFlight;
+  } finally {
+    tasksFetchInFlight = null;
+  }
+}
+
 async function fetchAndUpdateBadge() {
   try {
     const isAuth = await AuthService.isAuthenticated();
@@ -104,16 +141,9 @@ async function fetchAndUpdateBadge() {
       return null;
     }
 
-    const data = await apiFetch("/api/problems/today");
-    const problems = data?.problems || [];
-    await updateBadge(problems.length);
-
-    // Persist to chrome.storage.local — all content scripts react via onChanged
-    await chrome.storage.local.set({
-      tasksState: { problems, count: problems.length, lastUpdated: Date.now() },
-    });
-
-    return problems;
+    const tasksState = await fetchTodayTasksFromApi();
+    await updateBadge(tasksState.count);
+    return tasksState.problems;
   } catch (err) {
     console.warn("[BG] Badge fetch failed:", err);
     return null;
@@ -352,16 +382,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // ── NEW: Fetch daily tasks (max 3) for the capsule ────────
   if (message.type === "GET_DAILY_TASKS") {
-    apiFetch("/api/problems/today")
-      .then(async (data) => {
-        const problems = data?.problems || [];
-        await updateBadge(problems.length);
-        sendResponse({ problems, count: problems.length });
-      })
-      .catch((err) => {
+    (async () => {
+      try {
+        const forceRefresh = !!message?.data?.forceRefresh;
+
+        if (!forceRefresh) {
+          const cached = await getCachedTasksState();
+          if (isTasksCacheFresh(cached)) {
+            const problems = cached.problems || [];
+            const count = typeof cached.count === "number" ? cached.count : problems.length;
+            await updateBadge(count);
+            sendResponse({ problems, count, source: "cache", lastUpdated: cached.lastUpdated });
+            return;
+          }
+        }
+
+        const tasksState = await fetchTodayTasksFromApi();
+        await updateBadge(tasksState.count);
+        sendResponse({
+          problems: tasksState.problems,
+          count: tasksState.count,
+          source: "api",
+          lastUpdated: tasksState.lastUpdated,
+        });
+      } catch (err) {
         console.error("[BG] Fetch daily tasks error:", err);
         sendResponse({ problems: [], count: 0, error: err.message });
-      });
+      }
+    })();
     return true;
   }
 
@@ -396,7 +444,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // ── Check if a specific URL is already saved in the backend ──
   if (message.type === "CHECK_PROBLEM_BY_URL") {
     const { url } = message.data;
-    apiFetch(`/api/problems?url=${encodeURIComponent(url)}&limit=1`)
+    apiFetch(`/api/problems?url=${encodeURIComponent(url)}&limit=1&status=active`)
       .then((data) => {
         const problem = data?.problems?.[0] || null;
         sendResponse({ saved: !!problem, problem });

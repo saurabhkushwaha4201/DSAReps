@@ -94,24 +94,62 @@ const getAllProblems = async (req, res) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
     let limit = parseInt(req.query.limit, 10) || 20;
+    const requestedSortBy = typeof req.query.sortBy === 'string'
+      ? req.query.sortBy.trim()
+      : 'updatedAt';
+    const sortBy = ['updatedAt', 'createdAt', 'nextReviewDate'].includes(requestedSortBy)
+      ? requestedSortBy
+      : 'updatedAt';
     // Cap limit to prevent abuse (e.g., ?limit=999999)
     limit = Math.min(Math.max(limit, 1), 100);
     const skip = (page - 1) * limit;
 
+    const userId = mongoose.Types.ObjectId.isValid(req.user.id)
+      ? new mongoose.Types.ObjectId(req.user.id)
+      : req.user.id;
+
     const query = {
-      userId: req.user.id,
+      userId,
       isDeleted: { $ne: true },
     };
+
+    if (req.query.status === 'active') {
+      query.status = { $ne: 'archived' };
+    } else if (req.query.status === 'archived') {
+      query.status = 'archived';
+    }
 
     if (req.query.url) {
       query.url = req.query.url;
     }
 
-    const [problems, total] = await Promise.all([
-      Problem.find(query)
-        .sort({ updatedAt: -1 })
+    let problemsPromise;
+
+    if (sortBy === 'nextReviewDate') {
+      problemsPromise = Problem.aggregate([
+        { $match: query },
+        {
+          $addFields: {
+            sortDueBucket: {
+              $cond: [{ $eq: ['$nextReviewDate', null] }, 1, 0],
+            },
+          },
+        },
+        { $sort: { sortDueBucket: 1, nextReviewDate: 1, _id: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+        { $project: { sortDueBucket: 0 } },
+      ]);
+    } else {
+      const field = sortBy === 'createdAt' ? 'createdAt' : 'updatedAt';
+      problemsPromise = Problem.find(query)
+        .sort({ [field]: -1, _id: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit);
+    }
+
+    const [problems, total] = await Promise.all([
+      problemsPromise,
       Problem.countDocuments(query),
     ]);
 

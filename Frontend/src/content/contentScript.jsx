@@ -260,28 +260,38 @@ async function injectAndSync(config) {
       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
     </svg>`;
 
-  // 3. Initial sync — check local cache first, then backend as fallback
-  let alreadySaved = await StorageController.isSaved(problemId);
-
-  if (!alreadySaved) {
-    // Not in local cache — ask backend (covers problems saved via dashboard/popup)
+  const checkBackendSaved = async () => {
     const backendCheck = await new Promise((resolve) => {
       chrome.runtime.sendMessage(
         { type: 'CHECK_PROBLEM_BY_URL', data: { url: window.location.href } },
         (res) => resolve(res || { saved: false, problem: null })
       );
     });
-    if (backendCheck.saved && backendCheck.problem) {
-      // Sync into local cache so future checks are instant
-      await StorageController.save({
-        id: problemId,
-        title: problemTitle,
-        url: window.location.href,
-        platform: config.platform,
-        dbId: backendCheck.problem._id,
-      });
-      alreadySaved = true;
-    }
+
+    return backendCheck?.saved && backendCheck.problem
+      ? backendCheck.problem
+      : null;
+  };
+
+  // 3. Initial sync — use local cache for speed, then verify against active backend data
+  let alreadySaved = await StorageController.isSaved(problemId);
+
+  const backendProblem = await checkBackendSaved();
+
+  if (alreadySaved && !backendProblem) {
+    // Local cache is stale, so clear it before rendering the icon.
+    await StorageController.remove(problemId);
+    alreadySaved = false;
+  } else if (backendProblem) {
+    // Sync into local cache so future checks are instant.
+    await StorageController.save({
+      id: problemId,
+      title: problemTitle,
+      url: window.location.href,
+      platform: config.platform,
+      dbId: backendProblem._id,
+    });
+    alreadySaved = true;
   }
 
   // is-saved triggers Tier 2 (big pop after entrance); plain btn gets Tier 1 (subtle entrance)

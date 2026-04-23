@@ -13,7 +13,6 @@ const problemSchema = new mongoose.Schema(
       type: String,
       enum: ['leetcode', 'codeforces', 'cses', 'gfg', 'other'],
       required: true,
-      index: true,
     },
 
     title: {
@@ -33,7 +32,6 @@ const problemSchema = new mongoose.Schema(
       type: String,
       enum: ['easy', 'medium', 'hard'],
       required: true,
-      index: true,
     },
 
     attemptType: {
@@ -46,7 +44,6 @@ const problemSchema = new mongoose.Schema(
       type: String,
       enum: ['active', 'mastered', 'archived'],
       default: 'active',
-      index: true,
     },
 
     notes: {
@@ -57,13 +54,11 @@ const problemSchema = new mongoose.Schema(
     tags: {
       type: [String], // NEW: e.g., ["DP", "Arrays"]
       default: [],
-      index: true,
     },
 
     isDeleted: {
       type: Boolean,
       default: false,
-      index: true,
     },
 
     archivedAt: {
@@ -139,11 +134,6 @@ problemSchema.index(
     partialFilterExpression: { isDeleted: false },
   }
 );
-
-/**
- * Efficient queries for dashboards
- */
-problemSchema.index({ userId: 1, status: 1 });
 
 /**
  * Manual override triage index
