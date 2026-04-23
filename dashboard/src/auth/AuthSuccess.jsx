@@ -11,9 +11,15 @@ export default function AuthSuccess() {
 
     if (!token) return;
 
-    // Store token in localStorage first (works in dashboard context)
-    localStorage.setItem('token', token);
-    console.log('[AuthSuccess] Token stored in localStorage');
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    // Prefer httpOnly cookies when the backend supports them; localStorage is a fallback here.
+    try {
+      localStorage.setItem('token', token);
+      console.log('[AuthSuccess] Token stored in localStorage');
+    } catch (error) {
+      console.error('[AuthSuccess] Failed to store token in localStorage:', error);
+    }
 
     // We use the ID from the URL or fallback to the known ID
     // Note: Ideally dynamically detect, but for local dev this is fine.

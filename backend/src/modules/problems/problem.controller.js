@@ -15,6 +15,45 @@ const computeReviewType = (stabilityScore) => {
   return 'FULL_RECODE';
 };
 
+const parseShortOffset = (offsetLabel = 'GMT') => {
+  if (offsetLabel === 'GMT' || offsetLabel === 'UTC') {
+    return 0;
+  }
+
+  const match = offsetLabel.match(/^(?:GMT|UTC)([+-])(\d{1,2})(?::?(\d{2}))?$/i);
+  if (!match) {
+    throw new RangeError(`Unsupported timezone offset label: ${offsetLabel}`);
+  }
+
+  const [, sign, hours, minutes = '00'] = match;
+  const totalMinutes = (Number(hours) * 60) + Number(minutes);
+  return (sign === '-' ? -1 : 1) * totalMinutes * 60 * 1000;
+};
+
+const getTimezoneOffsetMs = (date, timezone) => {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    timeZoneName: 'shortOffset',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+  const timezoneName = formatter.formatToParts(date).find((part) => part.type === 'timeZoneName')?.value || 'GMT';
+  return parseShortOffset(timezoneName);
+};
+
+const resolveSafeTimezone = (timezone, fallback = 'UTC', context = 'unknown') => {
+  const candidate = typeof timezone === 'string' && timezone.trim() ? timezone.trim() : fallback;
+
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: candidate }).format(new Date());
+    return candidate;
+  } catch (error) {
+    console.warn(`[TIMEZONE] Invalid timezone "${candidate}" in ${context}; falling back to ${fallback}.`, error.message);
+    return fallback;
+  }
+};
+
 const getStartOfDayInTimezone = (date, timezone) => {
   const dateParts = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
@@ -25,23 +64,15 @@ const getStartOfDayInTimezone = (date, timezone) => {
   const year = Number(dateParts.find((part) => part.type === 'year')?.value || '0');
   const month = Number(dateParts.find((part) => part.type === 'month')?.value || '0');
   const day = Number(dateParts.find((part) => part.type === 'day')?.value || '0');
-  const utcMidnight = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
-  const zonedParts = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).formatToParts(utcMidnight);
-  const hour = Number(zonedParts.find((part) => part.type === 'hour')?.value || '0');
-  const minute = Number(zonedParts.find((part) => part.type === 'minute')?.value || '0');
-  const second = Number(zonedParts.find((part) => part.type === 'second')?.value || '0');
-
-  return new Date(Date.UTC(year, month - 1, day, -hour, -minute, -second));
+  const utcGuess = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+  const firstPass = new Date(utcGuess.getTime() - getTimezoneOffsetMs(utcGuess, timezone));
+  const correctedOffset = getTimezoneOffsetMs(firstPass, timezone);
+  return new Date(Date.UTC(year, month - 1, day, 0, 0, 0) - correctedOffset);
 };
 
 const updateUserStreak = async (userId, timezone = 'UTC') => {
-  const startOfToday = getStartOfDayInTimezone(new Date(), timezone);
+  const safeTimezone = resolveSafeTimezone(timezone, 'UTC', `updateUserStreak:${userId}`);
+  const startOfToday = getStartOfDayInTimezone(new Date(), safeTimezone);
   const completedToday = await RevisionLog.countDocuments({
     userId: new mongoose.Types.ObjectId(userId),
     createdAt: { $gte: startOfToday },
@@ -55,7 +86,7 @@ const updateUserStreak = async (userId, timezone = 'UTC') => {
 
   const streak = user?.streak || { current: 0, longest: 0, lastActiveDate: null };
   const lastActive = streak.lastActiveDate
-    ? getStartOfDayInTimezone(new Date(streak.lastActiveDate), timezone)
+    ? getStartOfDayInTimezone(new Date(streak.lastActiveDate), safeTimezone)
     : null;
   const yesterday = new Date(startOfToday);
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
@@ -262,6 +293,15 @@ const saveProblem = async (req, res) => {
       problem,
     });
   } catch (err) {
+    if (err?.code === 11000) {
+      console.warn('[PROBLEM] Duplicate key conflict while saving problem:', err.keyValue);
+      return res.status(409).json({
+        success: false,
+        isDuplicate: true,
+        error: 'DUPLICATE_PROBLEM',
+        message: 'This problem is already tracked for the user.',
+      });
+    }
     console.error('[PROBLEM] Save error:', err);
     res.status(500).json({ message: 'Failed to save problem' });
   }
@@ -485,7 +525,7 @@ const rescheduleProblem = async (req, res) => {
 const getStats = async (req, res) => {
   try {
     const userId = req.user.id;
-    const timezone = req.query.tz || 'UTC';
+    const timezone = resolveSafeTimezone(req.query.tz || 'UTC', 'UTC', `getStats:${userId}`);
 
     const oneYearAgo = new Date();
     oneYearAgo.setDate(oneYearAgo.getDate() - 365);

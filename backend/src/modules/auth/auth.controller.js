@@ -145,7 +145,10 @@ const googleCallback = async (req, res) => {
       // Prefer the dynamic redirect_uri sent by the extension (chrome.identity.getRedirectURL)
       // so the backend doesn't need a hardcoded EXTENSION_ID env var.
       // Validate it is a chromiumapp.org URL to prevent open-redirect attacks.
-      let finalRedirectBase = `https://${process.env.EXTENSION_ID}.chromiumapp.org/`;
+      const extensionId = process.env.EXTENSION_ID?.trim();
+      let finalRedirectBase = extensionId
+        ? `https://${extensionId}.chromiumapp.org/`
+        : null;
       if (redirectUri) {
         try {
           const parsed = new URL(redirectUri);
@@ -159,8 +162,13 @@ const googleCallback = async (req, res) => {
         }
       }
 
+      if (!finalRedirectBase) {
+        console.warn('[Backend] Missing EXTENSION_ID and no trusted redirect_uri was provided for extension auth.');
+        return res.status(400).send('Extension redirect is not configured safely.');
+      }
+
       const sep = finalRedirectBase.includes('?') ? '&' : '?';
-      return res.redirect(`${finalRedirectBase}${sep}token=${token}`);
+      return res.redirect(`${finalRedirectBase}${sep}token=${encodeURIComponent(token)}`);
     }
 
 

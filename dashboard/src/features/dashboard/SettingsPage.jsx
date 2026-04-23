@@ -227,7 +227,7 @@ const SettingsPage = () => {
             {/* Save Button */}
 
             {/* ── Weekly Digest ──────────────────────────────────── */}
-            <section className="bg-white dark:bg-linear-to-br dark:from-[#151b2b] dark:to-[#1a1c2e] border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-4 relative overflow-hidden">
+            <section className="bg-white dark:bg-gradient-to-br dark:from-[#151b2b] dark:to-[#1a1c2e] border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-4 relative overflow-hidden">
                 {/* Coming Soon badge */}
                 <div className="absolute top-4 right-4">
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/20">

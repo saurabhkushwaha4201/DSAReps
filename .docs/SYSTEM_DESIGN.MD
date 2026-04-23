@@ -64,8 +64,9 @@ The backend acts as the central source of truth, handling OAuth, problem ingesti
 
 ### The Rating System & Math
 
-The user's subjective feedback during a review acts as the input. The backend then recalculates their `stabilityScore` (0-100 mastery rating) and applies an interval multiplier to schedule the next review. A newly captured problem starts with a baseline `stabilityScore` of 30.
+The user's subjective feedback during a review acts as the input. The backend then recalculates their `stabilityScore` (0-100 mastery rating) and applies a deterministic interval rule to schedule the next review. A newly captured problem starts with a baseline `stabilityScore` of 30 and an initial interval taken from the user's difficulty settings.
 
+<<<<<<< HEAD
 Current backend rules are implemented in `RATING_RULES` and `computeReviewType`.
 
 - 🔴 **User Input: FORGOT**
@@ -83,6 +84,23 @@ Current backend rules are implemented in `RATING_RULES` and `computeReviewType`.
   - **Logic:** Instant recognition and flawless execution.
   - **Math:** Deterministic increase in `RATING_RULES.CLEAN`: `stabilityScore = min(100, stabilityScore + 20)`.
   - **Interval:** Applies a **2.5x multiplier** to the current interval (e.g., 4 days becomes 10 days) to push it further into long-term memory.
+=======
+- **User Input: FORGOT**
+  - **Resulting State:** `FULL_RECODE` (`computeReviewType(stabilityScore)` after `RATING_RULES.FORGOT` resets the score below 40)
+  - **Logic:** The user completely forgot the approach.
+  - **Math:** Deterministic hard reset in `RATING_RULES.FORGOT`: `stabilityScore = 10`.
+  - **Interval:** Deterministic reset in `RATING_RULES.FORGOT`: `currentIntervalDays = 1`.
+- **User Input: SLOW**
+  - **Resulting State:** `PATTERN_REBUILD` (`computeReviewType(stabilityScore)` when the adjusted score lands in the 40-69 band)
+  - **Logic:** The user solved it, but struggled to recall the optimal pattern.
+  - **Math:** Deterministic increase in `RATING_RULES.SLOW`: `stabilityScore = min(100, stabilityScore + 5)`.
+  - **Interval:** `currentIntervalDays = min(90, max(1, Math.round(currentIntervalDays * 1.5)))` (for example, `2 -> 3`).
+- **User Input: CLEAN**
+  - **Resulting State:** `MICRO_RECALL` (`computeReviewType(stabilityScore)` when the adjusted score is 70 or higher)
+  - **Logic:** Instant recognition and flawless execution.
+  - **Math:** Deterministic increase in `RATING_RULES.CLEAN`: `stabilityScore = min(100, stabilityScore + 20)`.
+  - **Interval:** `currentIntervalDays = min(90, max(1, Math.round(currentIntervalDays * 2.5)))` (for example, `1 -> 3`, `4 -> 10`).
+>>>>>>> feature/add-toggle-sortBy
 
 ### Daily Triage Service (`triage.service.js`)
 
@@ -130,7 +148,11 @@ The Problem collection is designed to track both metadata and spaced-repetition 
 - `({ userId: 1, url: 1 }, { unique: true, partialFilterExpression: { isDeleted: false } })`
   - Enforces one active/non-deleted problem per user URL.
   - Enables restore-on-retrack behavior: tracking the same URL again restores the existing document instead of creating a duplicate.
+<<<<<<< HEAD
   - Matches implementation in `backend/src/modules/problems/problem.model.js`.
+=======
+  - Duplicate-key conflicts are handled in the save flow so concurrent inserts return a safe duplicate response instead of leaving inconsistent state.
+>>>>>>> feature/add-toggle-sortBy
 
 ## 5. 🛡️ Security & Guardrails
 
@@ -201,13 +223,18 @@ sequenceDiagram
   API->>DB: Query: nextReviewDate <= today OR isManualOverride == true
   DB-->>API: Returns due tasks sorted by lowest stability
   API-->>Dash: Array of tasks (max daily cap)
-  Dash-->>User: Displays "Today's Tasks" queue (Tagged: Full Recode)
+  Dash-->>User: Displays "Today's Tasks" queue (Tagged: Full Recode from `computeReviewType(stabilityScore)`)
 
   Note over User,DB: Phase 3: Spaced Repetition Update
   User->>Dash: Re-solves problem & clicks "CLEAN" rating
   Dash->>API: POST /api/problems/{id}/revise { rating: 'CLEAN' }
+<<<<<<< HEAD
   API->>API: Algorithm: RATING_RULES.CLEAN => stability +20 (cap 100), interval x2.5 then Math.round
   API->>DB: Update (example: stability 30 -> 50, nextReview: +3 days, rounded from 2.5)
+=======
+  API->>API: Algorithm: `RATING_RULES.CLEAN` => `stabilityScore = min(100, score + 20)`; `currentIntervalDays = min(90, max(1, Math.round(interval * 2.5)))`
+  API->>DB: Update (stability: 30 -> 50, nextReview: +3 days, rounded from 2.5)
+>>>>>>> feature/add-toggle-sortBy
   DB-->>API: Success (New RevisionLog entry created)
   API-->>Dash: Updated stats & newly calculated metrics
   Dash-->>User: UI Reacts: Heatmap cell updates, task removed from queue

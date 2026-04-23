@@ -17,9 +17,10 @@ export const saveProblem = async (data) => {
 /**
  * Fetch all problems with optional filters
  */
-export const getAllProblems = async (filters = {}) => {
+export const getAllProblems = async (filters = {}, options = {}) => {
   const res = await api.get("/api/problems", {
     params: filters,
+    signal: options.signal,
   });
   return res.data;
 };

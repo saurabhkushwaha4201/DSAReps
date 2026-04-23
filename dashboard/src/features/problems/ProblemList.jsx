@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ProblemCard from './ProblemCard';
 import AddProblemModal from './AddProblemModal';
 import { NotesDrawer } from '../../components/notes/NotesDrawer';
@@ -36,11 +36,19 @@ export default function ProblemList() {
     const [showAddModal, setShowAddModal] = useState(false);
     // Rating picker: { id, title } of problem being rated, or null
     const [ratingTarget, setRatingTarget] = useState(null);
+    const requestRef = useRef({ controller: null, requestId: 0 });
+    const dialogRef = useRef(null);
+    const previouslyFocusedRef = useRef(null);
 
     // Helpers
     const getId = (prob) => prob._id || prob.id;
 
     const loadProblems = async (pageNum) => {
+        requestRef.current.controller?.abort();
+        const controller = new AbortController();
+        const requestId = requestRef.current.requestId + 1;
+        requestRef.current = { controller, requestId };
+
         try {
             if (pageNum === 1) {
                 setLoading(true);
@@ -48,7 +56,11 @@ export default function ProblemList() {
                 setLoadingMore(true);
             }
 
-            const data = await getAllProblems({ page: pageNum, limit: 20, sortBy });
+            const data = await getAllProblems({ page: pageNum, limit: 20, sortBy }, { signal: controller.signal });
+
+            if (requestRef.current.requestId !== requestId) {
+                return;
+            }
 
             // Handle both paginated response and array response
             const problemsData = data.problems || data;
@@ -63,14 +75,19 @@ export default function ProblemList() {
             setHasMore(hasMoreData);
             setPage(pageNum);
         } catch (e) {
+            if (e?.name === 'CanceledError' || e?.name === 'AbortError' || e?.code === 'ERR_CANCELED') {
+                return;
+            }
             console.error(e);
             if (pageNum === 1) {
                 setProblems([]);
             }
             toast.error('Failed to load problems');
         } finally {
-            setLoading(false);
-            setLoadingMore(false);
+            if (requestRef.current.requestId === requestId) {
+                setLoading(false);
+                setLoadingMore(false);
+            }
         }
     };
 
@@ -86,7 +103,10 @@ export default function ProblemList() {
             }
         };
         document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            requestRef.current.controller?.abort();
+        };
     }, [sortBy]);
 
     useEffect(() => {
@@ -175,14 +195,64 @@ export default function ProblemList() {
     const handleRatingSubmit = async (rating) => {
         if (!ratingTarget) return;
         const { id } = ratingTarget;
-        setRatingTarget(null);
         try {
-            await reviseProblem(id, rating);
+            const updated = await reviseProblem(id, rating);
+            if (updated?.problem) {
+                setProblems(prev => prev.map((p) => (
+                    getId(p) === id ? { ...p, ...updated.problem } : p
+                )));
+            }
+            setRatingTarget(null);
             toast.success(`Marked as revised (${rating.toLowerCase()})`)
         } catch {
             toast.error('Failed to save revision');
         }
     };
+
+    useEffect(() => {
+        if (!ratingTarget) {
+            previouslyFocusedRef.current?.focus?.();
+            return;
+        }
+
+        previouslyFocusedRef.current = document.activeElement;
+        dialogRef.current?.querySelector('button')?.focus();
+    }, [ratingTarget]);
+
+    useEffect(() => {
+        if (!ratingTarget) return;
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                setRatingTarget(null);
+                return;
+            }
+
+            if (event.key !== 'Tab' || !dialogRef.current) {
+                return;
+            }
+
+            const focusable = dialogRef.current.querySelectorAll('button:not([disabled])');
+            if (focusable.length === 0) {
+                return;
+            }
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [ratingTarget]);
 
     const handleReschedule = (id, date) => {
         setProblems(prev => prev.map(p =>
@@ -427,13 +497,23 @@ export default function ProblemList() {
 
             {/* Rating Picker Modal */}
             {ratingTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setRatingTarget(null)}>
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 w-105 mx-4" onClick={e => e.stopPropagation()}>
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                    onClick={() => setRatingTarget(null)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="problem-rating-title"
+                >
+                    <div
+                        ref={dialogRef}
+                        className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 w-105 mx-4"
+                        onClick={e => e.stopPropagation()}
+                    >
                         <div className="text-center mb-6">
                             <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                                 <span className="text-2xl">🧠</span>
                             </div>
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">How did it go?</h3>
+                            <h3 id="problem-rating-title" className="text-xl font-bold text-slate-900 dark:text-white mb-1">How did it go?</h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-xs mx-auto">{ratingTarget.title}</p>
                         </div>
                         <div className="grid grid-cols-3 gap-3">

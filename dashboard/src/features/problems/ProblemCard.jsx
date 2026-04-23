@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { rescheduleProblem } from '../../api/problem.api';
 import { ReschedulePopover } from './ReschedulePopover';
-import { format, isToday, isPast } from 'date-fns';
+import { format, isToday, isPast, parseISO, startOfDay } from 'date-fns';
 import toast from 'react-hot-toast';
 
 const PLATFORM_COLORS = {
@@ -101,7 +101,10 @@ export default function ProblemCard({ problem, onMarkRevised, onArchive, onResto
                             </>
                         )}
                         {!isArchived && problem.nextReviewDate && (() => {
-                            const d = new Date(problem.nextReviewDate);
+                            const rawDate = typeof problem.nextReviewDate === 'string'
+                                ? parseISO(problem.nextReviewDate)
+                                : new Date(problem.nextReviewDate);
+                            const d = startOfDay(rawDate);
                             const overdue = isPast(d) && !isToday(d);
                             const due = isToday(d);
                             const label = overdue ? 'Overdue' : due ? 'Due today' : `Due ${format(d, 'MMM d')}`;

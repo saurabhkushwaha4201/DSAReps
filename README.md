@@ -84,9 +84,19 @@ DSAReps addresses this by introducing a spaced-repetition-based workflow for DSA
 
 > No local setup required! The dashboard and backend are already deployed.
 
+<<<<<<< HEAD
 1. Go to the **[Releases](https://github.com/saurabhkushwaha4201/DSAReps/releases)** page.  
 2. Download the **`Extension.zip`** file from the latest release *(ignore "Source code" files)*.  
 3. Extract the zip file to your computer.  
+=======
+1. Go to the **[Releases](/releases)** page.
+2. Download the **`Extension.zip`** file attached to the latest release (you can ignore the "Source code" files).
+3. Extract the downloaded zip file to your computer.
+4. Open Google Chrome and navigate to `chrome://extensions/`.
+5. Enable **Developer Mode** (toggle in the top-right corner).
+6. Click **Load Unpacked**.
+7. Select the **`dist`** folder located *inside* the extracted `Extension` folder.
+>>>>>>> feature/add-toggle-sortBy
 
 4. Open Google Chrome and go to:  
    `chrome://extensions/`  
@@ -145,7 +155,7 @@ DSAReps is built as a three-layer system where data flows from the browser to th
 │   └── React + Vite web dashboard for analytics, task views, settings, and exports.
 ├── backend/
 │   └── Node.js + Express API with MongoDB for auth, problems, revisions, and user settings.
-└── docs/
+└── .docs/
     ├── SYSTEM_DESIGN.md
     └── assets/
 ```
@@ -234,8 +244,10 @@ Use the provided `.env.example` files in each folder as a reference. Use the fol
 |----------|----------|---------|---------|
 | `PORT` | No | `5000` | Backend server port |
 | `NODE_ENV` | No | `development` | Runtime mode |
-| `MONGO_URI` | Yes | `mongodb://localhost:27017/dsa-tracker` | MongoDB connection string |
-| `JWT_SECRET` | Yes | `your_jwt_secret` | JWT signing/verification key |
+| `MONGO_URI` | Yes | `mongodb+srv://<host>/<dbname>?retryWrites=true&w=majority` | MongoDB connection string template; username/password can be injected from env |
+| `MONGODB_USER_NAME` | No | `your_mongo_username` | Optional MongoDB username used to build the final connection URI |
+| `MONGODB_PASSWORD` | No | `your_mongo_password` | Optional MongoDB password used to build the final connection URI |
+| `JWT_SECRET` | Yes | `generate_a_32+_char_random_secret` | JWT signing/verification key |
 | `GOOGLE_CLIENT_ID` | Yes | `xxxxx.apps.googleusercontent.com` | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Yes | `your_google_client_secret` | Google OAuth client secret |
 | `GOOGLE_CALLBACK_URL` | No | `http://localhost:5000/api/auth/google/callback` | Optional explicit OAuth callback URL |
@@ -248,12 +260,19 @@ Use the provided `.env.example` files in each folder as a reference. Use the fol
 |----------|----------|---------|---------|
 | `VITE_GOOGLE_CLIENT_ID` | Yes | `xxxxx.apps.googleusercontent.com` | Google Sign-In configuration |
 | `VITE_API_URL` | No | `http://localhost:5000` | Backend API base URL |
+<<<<<<< HEAD
 | `VITE_BACKEND_URL` | No | `http://localhost:5000` | Alternate backend URL key used by Axios |
 | `VITE_WEB3FORM_ACCESS_KEY` | No | `your_access_key` | Feedback form integration |
 
 > At least one of `VITE_API_URL` or `VITE_BACKEND_URL` should be set.
 
 
+=======
+| `VITE_BACKEND_URL` | No | `http://localhost:5000` | Legacy/alternate backend URL key for older setups |
+| `VITE_WEB3FORM_ACCESS_KEY` | No | `your_access_key` | Feedback form integration |
+
+> At least one of `VITE_API_URL` or `VITE_BACKEND_URL` should be set.
+>>>>>>> feature/add-toggle-sortBy
 
 ### `Frontend/.env` (Extension)
 

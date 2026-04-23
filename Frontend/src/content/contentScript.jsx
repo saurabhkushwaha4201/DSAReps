@@ -315,7 +315,14 @@ async function injectAndSync(config) {
           new Promise((resolve) => setTimeout(() => resolve({ error: 'timeout' }), 8000)),
         ]);
         if (response?.error) {
-          showToast('Failed to remove problem', '❌');
+          await StorageController.remove(problemId);
+          btn.classList.remove('is-saved', 'just-saved');
+          showToast(
+            response.error === 'timeout'
+              ? 'Removal timed out. Local state cleared.'
+              : 'Failed to remove problem',
+            '❌'
+          );
           btn.style.pointerEvents = 'auto';
           return;
         }
