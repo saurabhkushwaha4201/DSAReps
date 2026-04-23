@@ -12,7 +12,6 @@ const revisionLogSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Problem',
             required: true,
-            index: true,
         },
         reviewedAt: {
             type: Date,
@@ -40,7 +39,6 @@ const revisionLogSchema = new mongoose.Schema(
 );
 
 // Indexes for analytics
-revisionLogSchema.index({ userId: 1, reviewedAt: 1 });
 revisionLogSchema.index({ userId: 1, createdAt: 1 });
 
 module.exports = mongoose.model('RevisionLog', revisionLogSchema);

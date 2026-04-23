@@ -6,9 +6,24 @@ import toast from 'react-hot-toast';
 import { getAllProblems, archiveProblem, unarchiveProblem, reviseProblem } from '../../api/problem.api';
 import { Loader2, ChevronDown, Plus } from 'lucide-react';
 
+const SORT_STORAGE_KEY = 'problems_sortBy';
+
+const getInitialSortBy = () => {
+    try {
+        const saved = localStorage.getItem(SORT_STORAGE_KEY);
+        if (['updatedAt', 'createdAt', 'nextReviewDate'].includes(saved)) {
+            return saved;
+        }
+    } catch {
+        // Ignore localStorage access errors and fall back to default.
+    }
+    return 'updatedAt';
+};
+
 export default function ProblemList() {
     const [problems, setProblems] = useState([]);
     const [activeFilter, setActiveFilter] = useState('All');
+    const [sortBy, setSortBy] = useState(getInitialSortBy);
     const [view, setView] = useState('active'); // 'active' | 'archived'
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -25,18 +40,6 @@ export default function ProblemList() {
     // Helpers
     const getId = (prob) => prob._id || prob.id;
 
-    useEffect(() => {
-        loadProblems(1);
-
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                loadProblems(1);
-            }
-        };
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-    }, []);
-
     const loadProblems = async (pageNum) => {
         try {
             if (pageNum === 1) {
@@ -45,7 +48,7 @@ export default function ProblemList() {
                 setLoadingMore(true);
             }
 
-            const data = await getAllProblems({ page: pageNum, limit: 20 });
+            const data = await getAllProblems({ page: pageNum, limit: 20, sortBy });
 
             // Handle both paginated response and array response
             const problemsData = data.problems || data;
@@ -71,6 +74,29 @@ export default function ProblemList() {
         }
     };
 
+    useEffect(() => {
+        setProblems([]);
+        setPage(1);
+        setHasMore(true);
+        loadProblems(1);
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                loadProblems(1);
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [sortBy]);
+
+    useEffect(() => {
+        try {
+            localStorage.setItem(SORT_STORAGE_KEY, sortBy);
+        } catch {
+            // Ignore localStorage access errors.
+        }
+    }, [sortBy]);
+
     // 1. Filter & Sort Logic
     const visibleProblems = useMemo(() => {
         let filtered = problems;
@@ -91,8 +117,32 @@ export default function ProblemList() {
             return view === 'active' ? status !== 'archived' : status === 'archived';
         });
 
+        if (sortBy === 'createdAt') {
+            filtered = [...filtered].sort((a, b) => {
+                const aTime = new Date(a.createdAt || 0).getTime();
+                const bTime = new Date(b.createdAt || 0).getTime();
+                return bTime - aTime;
+            });
+        } else if (sortBy === 'nextReviewDate') {
+            filtered = [...filtered].sort((a, b) => {
+                const aDue = a.nextReviewDate ? new Date(a.nextReviewDate).getTime() : Number.POSITIVE_INFINITY;
+                const bDue = b.nextReviewDate ? new Date(b.nextReviewDate).getTime() : Number.POSITIVE_INFINITY;
+                if (aDue !== bDue) return aDue - bDue;
+
+                const aUpdated = new Date(a.updatedAt || 0).getTime();
+                const bUpdated = new Date(b.updatedAt || 0).getTime();
+                return bUpdated - aUpdated;
+            });
+        } else {
+            filtered = [...filtered].sort((a, b) => {
+                const aTime = new Date(a.updatedAt || 0).getTime();
+                const bTime = new Date(b.updatedAt || 0).getTime();
+                return bTime - aTime;
+            });
+        }
+
         return filtered;
-    }, [problems, activeFilter, view]);
+    }, [problems, activeFilter, view, sortBy]);
 
     // 2. Handlers
     const handleArchive = async (id) => {
@@ -231,46 +281,64 @@ export default function ProblemList() {
             </div>
 
             {/* Filter Bar - Better spacing and alignment */}
-            <div className="p-2 bg-white dark:bg-slate-900/80 rounded-lg border border-slate-200 dark:border-slate-700 w-full md:w-fit">
-                {/* Mobile: Two rows with consistent grid */}
-                <div className="flex flex-col gap-2 md:hidden">
-                    {/* Row 1: Difficulty filters - 4 equal columns */}
-                    <div className="grid grid-cols-4 gap-1.5">
-                        {['All', 'Easy', 'Medium', 'Hard'].map((filter) => (
-                            <button
-                                key={filter}
-                                onClick={() => setActiveFilter(filter)}
-                                className={`h-9 px-2 text-xs font-medium rounded-md transition-all cursor-pointer ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80 hover:scale-105 active:scale-95'}`}
-                            >
-                                {filter}
-                            </button>
-                        ))}
-                    </div>
-                    {/* Row 2: Platform filters */}
-                    <div className="grid grid-cols-2 gap-1.5">
-                        {['LeetCode', 'Codeforces', 'CSES', 'GFG'].map((filter) => (
-                            <button
-                                key={filter}
-                                onClick={() => setActiveFilter(filter)}
-                                className={`h-9 px-2 text-xs font-medium rounded-md transition-all cursor-pointer ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80 hover:scale-105 active:scale-95'}`}
-                            >
-                                {filter}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+            <div className="p-2 bg-white dark:bg-slate-900/80 rounded-lg border border-slate-200 dark:border-slate-700 w-full">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="flex-1">
+                        {/* Mobile: Two rows with consistent grid */}
+                        <div className="flex flex-col gap-2 md:hidden">
+                            {/* Row 1: Difficulty filters - 4 equal columns */}
+                            <div className="grid grid-cols-4 gap-1.5">
+                                {['All', 'Easy', 'Medium', 'Hard'].map((filter) => (
+                                    <button
+                                        key={filter}
+                                        onClick={() => setActiveFilter(filter)}
+                                        className={`h-9 px-2 text-xs font-medium rounded-md transition-all cursor-pointer ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80 hover:scale-105 active:scale-95'}`}
+                                    >
+                                        {filter}
+                                    </button>
+                                ))}
+                            </div>
+                            {/* Row 2: Platform filters */}
+                            <div className="grid grid-cols-2 gap-1.5">
+                                {['LeetCode', 'Codeforces', 'CSES', 'GFG'].map((filter) => (
+                                    <button
+                                        key={filter}
+                                        onClick={() => setActiveFilter(filter)}
+                                        className={`h-9 px-2 text-xs font-medium rounded-md transition-all cursor-pointer ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80 hover:scale-105 active:scale-95'}`}
+                                    >
+                                        {filter}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
-                {/* Desktop: Single row */}
-                <div className="hidden md:flex items-center gap-2">
-                    {['All', 'Easy', 'Medium', 'Hard', 'LeetCode', 'Codeforces', 'CSES', 'GFG'].map((filter) => (
-                        <button
-                            key={filter}
-                            onClick={() => setActiveFilter(filter)}
-                            className={`h-9 px-4 text-sm font-medium rounded-md transition-all whitespace-nowrap cursor-pointer ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80 hover:scale-105 active:scale-95'}`}
+                        {/* Desktop: Single row */}
+                        <div className="hidden md:flex items-center gap-2">
+                            {['All', 'Easy', 'Medium', 'Hard', 'LeetCode', 'Codeforces', 'CSES', 'GFG'].map((filter) => (
+                                <button
+                                    key={filter}
+                                    onClick={() => setActiveFilter(filter)}
+                                    className={`h-9 px-4 text-sm font-medium rounded-md transition-all whitespace-nowrap cursor-pointer ${getFilterStyle(filter, activeFilter === filter)} ${activeFilter === filter ? 'shadow-sm ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 ring-current/20' : 'hover:opacity-80 hover:scale-105 active:scale-95'}`}
+                                >
+                                    {filter}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 text-sm">
+                        <label htmlFor="sort-select" className="text-slate-500 dark:text-slate-400">Sort by:</label>
+                        <select
+                            id="sort-select"
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="h-9 px-3 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
                         >
-                            {filter}
-                        </button>
-                    ))}
+                            <option value="updatedAt">Recently Updated</option>
+                            <option value="createdAt">Recently Added</option>
+                            <option value="nextReviewDate">Due Date (Earliest)</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
